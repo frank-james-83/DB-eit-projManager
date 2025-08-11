@@ -211,8 +211,8 @@
           ><el-icon><Close /></el-icon></el-button>
         </div>
         
-        <el-tabs v-if="activeProject" type="card" class="detail-tabs">
-          <el-tab-pane label="基本信息">
+        <el-tabs v-if="activeProject" type="card" class="detail-tabs" v-model="activeTab">
+          <el-tab-pane label="基本信息" name="basic">
             <el-descriptions :column="1" border>
               <el-descriptions-item label="项目编号">{{ activeProject.projectId }}</el-descriptions-item>
               <el-descriptions-item label="项目名称">{{ activeProject.name }}</el-descriptions-item>
@@ -223,18 +223,17 @@
               <el-descriptions-item label="项目描述">{{ activeProject.description }}</el-descriptions-item>
             </el-descriptions>
           </el-tab-pane>
-          
-          <el-tab-pane label="财务数据">
+          <el-tab-pane label="财务数据" name="financial">
             <el-descriptions :column="2" border>
               <el-descriptions-item label="预算金额">{{ formatCurrency(activeProject.budget) }}</el-descriptions-item>
               <el-descriptions-item label="已使用金额">{{ formatCurrency(activeProject.spent) }}</el-descriptions-item>
               <el-descriptions-item label="预计总成本">{{ formatCurrency(activeProject.estimatedCost) }}</el-descriptions-item>
               <el-descriptions-item label="成本偏差">{{ formatCurrency(activeProject.costVariance) }}</el-descriptions-item>
             </el-descriptions>
-            <el-chart :data="financialChartData" type="line" class="mt-4"></el-chart>
+            <v-chart :option="financialChartOption" autoresize class="mt-4" style="height: 300px;" v-show="true"></v-chart>
           </el-tab-pane>
           
-          <el-tab-pane label="进度跟踪">
+          <el-tab-pane label="进度跟踪" name="progress">
             <div class="progress-overview">
               <div class="progress-stats">
                 <div class="stat-item">
@@ -274,7 +273,7 @@
             </el-timeline>
           </el-tab-pane>
           
-          <el-tab-pane label="工时统计">
+          <el-tab-pane label="工时统计" name="hours">
             <el-table :data="activeProject.timeRecords" border size="small">
               <el-table-column prop="date" label="日期"></el-table-column>
               <el-table-column prop="user" label="人员"></el-table-column>
@@ -282,9 +281,7 @@
               <el-table-column prop="task" label="任务描述"></el-table-column>
             </el-table>
             
-            <div class="hours-chart mt-4">
-              
-            </div>
+            <v-chart :option="hoursChartOption" autoresize class="mt-4" style="height: 300px;" v-if="activeTab === 'hours'"></v-chart>
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -317,6 +314,7 @@ export default {
     const zoomLevel = ref(1);
     const isDetailOpen = ref(false);
     const activeProjectId = ref(null);
+    const activeTab = ref('basic'); // 添加这一行
     const activeProject = computed(() => {
       return projects.value.find(p => p.id === activeProjectId.value) || null;
     });
@@ -457,6 +455,49 @@ export default {
         { name: '5月', 预算: 75000, 实际: 70000 }
       ];
     });
+
+    // 财务图表配置
+    const financialChartOption = computed(() => {
+      if (!activeProject.value) return {}
+      
+      return {
+        title: {
+          text: '财务数据趋势'
+        },
+        tooltip: {
+          trigger: 'axis'
+        },
+        legend: {
+          data: ['预算', '实际']
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: ['1月', '2月', '3月', '4月', '5月']
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            name: '预算',
+            type: 'line',
+            data: [50000, 60000, 70000, 65000, 75000]
+          },
+          {
+            name: '实际',
+            type: 'line',
+            data: [45000, 58000, 65000, 62000, 70000]
+          }
+        ]
+      }
+    })
     
     const hoursChartData = computed(() => {
       if (!activeProject.value) return [];
@@ -467,6 +508,34 @@ export default {
         { name: '赵六', 工时: 120 }
       ];
     });
+
+    // 工时图表配置
+    const hoursChartOption = computed(() => {
+      if (!activeProject.value) return {}
+      
+      return {
+        title: {
+          text: '人员工时统计'
+        },
+        tooltip: {
+          trigger: 'axis'
+        },
+        xAxis: {
+          type: 'category',
+          data: ['张三', '李四', '王五', '赵六']
+        },
+        yAxis: {
+          type: 'value',
+          name: '工时(小时)'
+        },
+        series: [
+          {
+            data: [160, 140, 180, 120],
+            type: 'bar'
+          }
+        ]
+      }
+    })
     
     // 方法
     const handleProjectClick = (project) => {
@@ -549,12 +618,15 @@ export default {
       isDetailOpen,
       activeProjectId,
       activeProject,
+      activeTab,
       columns,
       projects,
       filteredProjects,
       timelineMonths,
       financialChartData,
+      financialChartOption,
       hoursChartData,
+      hoursChartOption,
       handleProjectClick,
       handleProjectNameClick,
       closeDetailPanel,
