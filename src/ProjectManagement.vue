@@ -31,7 +31,7 @@
           <h2>项目列表</h2>
           <div class="controls-right">
             <!-- 列显示控制 -->
-            <el-dropdown trigger="click" @command="handleColumnChange">
+            <el-dropdown trigger="click">
               <el-button size="small">
                 <el-icon><DataAnalysis /></el-icon>
                 列设置
@@ -39,22 +39,22 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="projectId" :disabled="!canHide('projectId')">
-                    <el-checkbox v-model="columns.projectId.visible">项目编号</el-checkbox>
+                    <el-checkbox :model-value="columns.projectId.visible" @change="() => handleColumnChange('projectId')">项目编号</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="name" :disabled="!canHide('name')">
-                    <el-checkbox v-model="columns.name.visible">项目名称</el-checkbox>
+                    <el-checkbox :model-value="columns.name.visible" @change="() => handleColumnChange('name')">项目名称</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="manager" :disabled="!canHide('manager')">
-                    <el-checkbox v-model="columns.manager.visible">项目经理</el-checkbox>
+                    <el-checkbox :model-value="columns.manager.visible" @change="() => handleColumnChange('manager')">项目经理</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="plannedHours" :disabled="!canHide('plannedHours')">
-                    <el-checkbox v-model="columns.plannedHours.visible">计划工时</el-checkbox>
+                    <el-checkbox :model-value="columns.plannedHours.visible" @change="() => handleColumnChange('plannedHours')">计划工时</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="usedHours" :disabled="!canHide('usedHours')">
-                    <el-checkbox v-model="columns.usedHours.visible">已用工时</el-checkbox>
+                    <el-checkbox :model-value="columns.usedHours.visible" @change="() => handleColumnChange('usedHours')">已用工时</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="progress" :disabled="!canHide('progress')">
-                    <el-checkbox v-model="columns.progress.visible">进度</el-checkbox>
+                    <el-checkbox :model-value="columns.progress.visible" @change="() => handleColumnChange('progress')">进度</el-checkbox>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -231,7 +231,7 @@
               <el-descriptions-item label="预计总成本">{{ formatCurrency(activeProject.estimatedCost) }}</el-descriptions-item>
               <el-descriptions-item label="成本偏差">{{ formatCurrency(activeProject.costVariance) }}</el-descriptions-item>
             </el-descriptions>
-            
+            <el-chart :data="financialChartData" type="line" class="mt-4"></el-chart>
           </el-tab-pane>
           
           <el-tab-pane label="进度跟踪">
@@ -490,6 +490,7 @@ export default {
     const canHide = (column) => {
       // 确保至少保留一列可见
       const visibleCount = Object.values(columns.value).filter(col => col.visible).length;
+      console.log('Visible count:', visibleCount, 'Current column:', column, 'Is visible:', columns.value[column].visible); // 添加调试日志
       return visibleCount > 1 || !columns.value[column].visible;
     };
     
