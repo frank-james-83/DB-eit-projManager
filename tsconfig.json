@@ -7,5 +7,12 @@
     {
       "path": "./tsconfig.app.json"
     }
-  ]
+  ],
+  "compilerOptions": {
+    // ... 其他配置
+    "types": [
+      //"vue",
+      "element-plus/global"  // 必须添加这一行
+    ]
+  }
 }
