@@ -257,6 +257,17 @@
                     <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
                   </div>
                 </el-tooltip>
+                <!-- 关键里程碑菱形图标 -->
+                <template v-if="idx === 0 && project.milestones && project.milestones.length">
+                  <div v-for="(milestone, mIdx) in project.milestones" :key="mIdx"
+                    class="gantt-milestone"
+                    :style="getMilestoneStyle(milestone, project)"
+                  >
+                    <el-tooltip effect="dark" placement="top" :content="getMilestoneTooltip(milestone)">
+                      <div :class="['milestone-diamond', milestone.completed ? 'milestone-completed' : '']"></div>
+                    </el-tooltip>
+                  </div>
+                </template>
               </div>
             </template>
             <template v-else>
@@ -942,7 +953,30 @@ export default {
       addPeriod,
       removePeriod,
       confirmPeriodEdit
+      ,getMilestoneStyle
+      ,getMilestoneTooltip
     };
+    // 计算milestone菱形在甘特条上的left百分比
+    function getMilestoneStyle(milestone, project) {
+      const start = dateRange.value[0];
+      const end = dateRange.value[1];
+      const total = end.getTime() - start.getTime();
+      const msDate = new Date(milestone.date);
+      const left = ((msDate.getTime() - start.getTime()) / total) * 100;
+      return {
+        position: 'absolute',
+        top: '-12px',
+        left: left + '%',
+        zIndex: 3,
+        width: '0',
+        height: '0',
+        pointerEvents: 'auto',
+      };
+    }
+    // 里程碑tooltip内容
+    function getMilestoneTooltip(milestone) {
+      return `${milestone.name} (${formatDate(milestone.date)})\n状态: ${milestone.completed ? '已完成' : '进行中'}`;
+    }
   }
 };
 </script>
@@ -1238,5 +1272,26 @@ export default {
   .detail-panel {
     width: 350px;
   }
+}
+
+/* 关键里程碑菱形样式 */
+.gantt-milestone {
+  pointer-events: auto;
+}
+.milestone-diamond {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 2px solid #e67e22;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  left: -8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  z-index: 4;
+}
+.milestone-completed {
+  background: #42b983;
+  border-color: #42b983;
 }
 </style>
