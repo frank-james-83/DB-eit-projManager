@@ -77,12 +77,16 @@
           :data="filteredProjects" 
           border 
           size="small"
+          :row-style="{ height: '40px' }"
           @row-click="handleProjectClick"
+          @sort-change="handleSortChange"
+          @filter-change="handleFilterChange"
           class="project-table"
         >
           <el-table-column 
             v-if="columns.projectId.visible"
             prop="projectId" 
+            column-key="projectId"
             label="项目编号" 
             sortable
             :filters="[{text: 'EIT-2023', value: 'EIT-2023'}, {text: 'EIT-2024', value: 'EIT-2024'}]"
@@ -92,6 +96,7 @@
           <el-table-column 
             v-if="columns.name.visible"
             prop="name" 
+            column-key="name"
             label="项目名称" 
             sortable
             :filter-method="(value, row) => row.name.includes(value)"
@@ -104,6 +109,7 @@
           <el-table-column 
             v-if="columns.manager.visible"
             prop="manager" 
+            column-key="manager"
             label="项目经理" 
             sortable
             :filters="getUniqueManagers().map(m => ({text: m, value: m}))"
@@ -113,6 +119,7 @@
           <el-table-column 
             v-if="columns.plannedHours.visible"
             prop="plannedHours" 
+            column-key="plannedHours"
             label="计划工时" 
             sortable
           ></el-table-column>
@@ -120,6 +127,7 @@
           <el-table-column 
             v-if="columns.usedHours.visible"
             prop="usedHours" 
+            column-key="usedHours"
             label="已用工时" 
             sortable
           ></el-table-column>
@@ -127,6 +135,7 @@
           <el-table-column 
             v-if="columns.progress.visible"
             prop="progress" 
+            column-key="progress"
             label="进度" 
             sortable
           >
@@ -168,7 +177,8 @@
               start-placeholder="开始日期"
               end-placeholder="结束日期"
               size="small"
-              class="ml-2"
+              class="ml-2 gantt-date-picker"
+              style="min-width: 260px; width: 320px;"
             ></el-date-picker>
           </div>
         </div>
@@ -298,6 +308,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import { fetchProjects, addProject, updateProject, deleteProject } from './api/project';
 
 export default {
   name: 'ProjectManagement',
@@ -329,114 +340,68 @@ export default {
       progress: { visible: true }
     });
     
-    // 项目数据
-    const projects = ref([
-      {
-        id: 1,
-        projectId: 'EIT-2023-001',
-        name: '智能工厂系统开发',
-        manager: '张三',
-        startDate: '2023-01-15',
-        endDate: '2023-06-30',
-        startPosition: 10,
-        duration: 30,
-        color: '#42b983',
-        plannedHours: 2400,
-        usedHours: 1800,
-        progress: 75,
-        status: 'inProgress',
-        budget: 500000,
-        spent: 350000,
-        estimatedCost: 480000,
-        costVariance: -20000,
-        description: '为某汽车制造企业开发智能工厂管理系统，实现生产流程自动化与数据可视化',
-        milestones: [
-          { name: '需求分析完成', date: '2023-02-10', completed: true },
-          { name: '系统设计完成', date: '2023-03-15', completed: true },
-          { name: '核心模块开发', date: '2023-05-20', completed: false },
-          { name: '系统上线', date: '2023-06-30', completed: false }
-        ],
-        timeRecords: [
-          { date: '2023-05-01', user: '张三', hours: 8, task: '系统架构优化' },
-          { date: '2023-05-02', user: '李四', hours: 6, task: '数据库设计' },
-          { date: '2023-05-03', user: '王五', hours: 7, task: '前端界面开发' },
-          { date: '2023-05-04', user: '赵六', hours: 8, task: '后端接口开发' }
-        ]
-      },
-      {
-        id: 2,
-        projectId: 'EIT-2023-002',
-        name: '数据分析平台建设',
-        manager: '李四',
-        startDate: '2023-03-01',
-        endDate: '2023-09-30',
-        startPosition: 25,
-        duration: 40,
-        color: '#3498db',
-        plannedHours: 3600,
-        usedHours: 1500,
-        progress: 42,
-        status: 'inProgress',
-        budget: 800000,
-        spent: 320000,
-        estimatedCost: 750000,
-        costVariance: -50000,
-        description: '构建企业级数据分析平台，整合多源数据，提供实时分析与决策支持',
-        milestones: [
-          { name: '数据调研完成', date: '2023-03-20', completed: true },
-          { name: '数据仓库搭建', date: '2023-05-30', completed: false },
-          { name: '分析模型开发', date: '2023-08-15', completed: false },
-          { name: '平台验收', date: '2023-09-30', completed: false }
-        ],
-        timeRecords: [
-          { date: '2023-05-01', user: '李四', hours: 8, task: '数据模型设计' },
-          { date: '2023-05-02', user: '王五', hours: 7, task: 'ETL流程开发' },
-          { date: '2023-05-03', user: '赵六', hours: 6, task: '可视化组件开发' }
-        ]
-      },
-      {
-        id: 3,
-        projectId: 'EIT-2023-003',
-        name: '移动应用开发',
-        manager: '王五',
-        startDate: '2023-05-01',
-        endDate: '2023-11-30',
-        startPosition: 40,
-        duration: 35,
-        color: '#e74c3c',
-        plannedHours: 1800,
-        usedHours: 450,
-        progress: 25,
-        status: 'inProgress',
-        budget: 300000,
-        spent: 80000,
-        estimatedCost: 290000,
-        costVariance: -10000,
-        description: '开发面向最终用户的移动应用，支持iOS和Android平台，提供便捷的业务操作功能',
-        milestones: [
-          { name: '原型设计完成', date: '2023-05-20', completed: false },
-          { name: 'iOS版本开发', date: '2023-08-30', completed: false },
-          { name: 'Android版本开发', date: '2023-09-30', completed: false },
-          { name: '应用发布', date: '2023-11-30', completed: false }
-        ],
-        timeRecords: [
-          { date: '2023-05-02', user: '王五', hours: 8, task: 'UI设计评审' },
-          { date: '2023-05-03', user: '赵六', hours: 8, task: 'API接口对接' },
-          { date: '2023-05-04', user: '张三', hours: 6, task: '前端框架搭建' }
-        ]
-      }
-    ]);
-    
-    // 过滤后的项目列表
-    const filteredProjects = computed(() => {
-      if (!searchQuery.value) return projects.value;
-      const query = searchQuery.value.toLowerCase();
-      return projects.value.filter(project => 
-        project.name.toLowerCase().includes(query) || 
-        project.projectId.toLowerCase().includes(query) ||
-        project.manager.toLowerCase().includes(query)
-      );
+    // 项目数据（后续用API获取）
+    const projects = ref([]);
+
+    // 示例：页面加载时获取项目列表
+    onMounted(async () => {
+      projects.value = await fetchProjects();
     });
+    
+    // 排序和过滤状态
+    const sortState = ref({ prop: '', order: '' });
+    const filterState = ref({});
+
+    // 过滤+排序后的项目列表
+    const filteredProjects = computed(() => {
+      let arr = projects.value;
+      // 搜索框过滤
+      if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        arr = arr.filter(project => 
+          project.name.toLowerCase().includes(query) || 
+          project.projectId.toLowerCase().includes(query) ||
+          project.manager.toLowerCase().includes(query)
+        );
+      }
+      // 表头过滤
+      Object.entries(filterState.value).forEach(([prop, values]) => {
+        if (!Array.isArray(values) || values.length === 0) {
+          // 不过滤该字段
+          return;
+        }
+        arr = arr.filter(row => {
+          const rowValue = row[prop] !== undefined && row[prop] !== null ? row[prop].toString().trim() : '';
+          const match = values.map(v => v !== undefined && v !== null ? v.toString().trim() : '').includes(rowValue);
+          console.log(`[过滤测试] prop: ${prop}, rowValue: '${rowValue}', values:`, values, 'match:', match, 'row:', row);
+          return match;
+        });
+      });
+      // 排序
+      if (sortState.value.prop && sortState.value.order) {
+        arr = [...arr].sort((a, b) => {
+          const prop = sortState.value.prop;
+          if (sortState.value.order === 'ascending') {
+            return a[prop] > b[prop] ? 1 : a[prop] < b[prop] ? -1 : 0;
+          } else {
+            return a[prop] < b[prop] ? 1 : a[prop] > b[prop] ? -1 : 0;
+          }
+        });
+      }
+      console.log('[filteredProjects] 当前排序:', sortState.value, '过滤:', filterState.value, '结果:', arr.map(p => p.name));
+      return arr;
+    });
+
+    // 监听表格排序
+    const handleSortChange = ({ prop, order }) => {
+      sortState.value = { prop, order };
+      console.log('[handleSortChange] 排序字段:', prop, '顺序:', order);
+    };
+    // 监听表格过滤
+    const handleFilterChange = (filters) => {
+      filterState.value = filters;
+      console.log('[handleFilterChange] 过滤条件:', filters);
+    };
     
     // 甘特图时间轴
     const timelineMonths = ref([
@@ -653,7 +618,9 @@ export default {
       formatCurrency,
       zoomIn,
       zoomOut,
-      handleTimeRangeChange
+  handleTimeRangeChange,
+  handleSortChange,
+  handleFilterChange
     };
   }
 };
@@ -708,7 +675,9 @@ export default {
   border-right: 1px solid #eaecef;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+  min-width: 0;
 }
 
 .list-controls {
@@ -731,7 +700,8 @@ export default {
 
 .project-table {
   flex: 1;
-  overflow: auto;
+  min-width: max-content;
+  width: 100%;
 }
 
 .project-name {
@@ -787,7 +757,7 @@ export default {
 }
 
 .gantt-row {
-  height: 60px;
+  height: 40px;
   margin-bottom: 10px;
   background-color: white;
   border-radius: 4px;
@@ -796,6 +766,7 @@ export default {
   padding-left: 10px;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 .gantt-row-active {
@@ -803,10 +774,11 @@ export default {
 }
 
 .gantt-task-bar {
-  height: 40px;
+  height: 24px;
   border-radius: 4px;
   position: absolute;
-  top: 10px;
+  top: 8px;
+  bottom: 8px;
   display: flex;
   align-items: center;
   padding: 0 10px;
@@ -814,6 +786,12 @@ export default {
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+}
+/* 表格内容强制单行显示，防止因换行导致行高变化 */
+.project-table .el-table__cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-label {
