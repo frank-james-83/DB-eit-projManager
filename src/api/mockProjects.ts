@@ -6,9 +6,12 @@ export const mockProjects = [
     name: '智能工厂系统开发',
     manager: '张三',
     startDate: '2023-01-15',
-    endDate: '2023-06-30',
-    startPosition: 10,
-    duration: 30,
+    endDate: '2023-03-10',
+    periods: [
+  { start: '2023-01-15', end: '2023-01-30', hours: 120, user: '张三', comment: '前期需求梳理' },
+  { start: '2023-02-10', end: '2023-02-20', hours: 80, user: '李四', comment: '系统设计与评审' },
+  { start: '2023-03-01', end: '2023-03-10', hours: 100, user: '王五', comment: '开发与测试' }
+    ],
     color: '#42b983',
     plannedHours: 2400,
     usedHours: 1800,
@@ -21,15 +24,15 @@ export const mockProjects = [
     description: '为某汽车制造企业开发智能工厂管理系统，实现生产流程自动化与数据可视化',
     milestones: [
       { name: '需求分析完成', date: '2023-02-10', completed: true },
-      { name: '系统设计完成', date: '2023-03-15', completed: true },
-      { name: '核心模块开发', date: '2023-05-20', completed: false },
-      { name: '系统上线', date: '2023-06-30', completed: false }
+      { name: '系统设计完成', date: '2023-03-01', completed: true },
+      { name: '核心模块开发', date: '2023-03-05', completed: false },
+      { name: '系统上线', date: '2023-03-10', completed: false }
     ],
     timeRecords: [
-      { date: '2023-05-01', user: '张三', hours: 8, task: '系统架构优化' },
-      { date: '2023-05-02', user: '李四', hours: 6, task: '数据库设计' },
-      { date: '2023-05-03', user: '王五', hours: 7, task: '前端界面开发' },
-      { date: '2023-05-04', user: '赵六', hours: 8, task: '后端接口开发' }
+      { date: '2023-02-01', user: '张三', hours: 8, task: '系统架构优化' },
+      { date: '2023-02-02', user: '李四', hours: 6, task: '数据库设计' },
+      { date: '2023-02-03', user: '王五', hours: 7, task: '前端界面开发' },
+      { date: '2023-02-04', user: '赵六', hours: 8, task: '后端接口开发' }
     ]
   },
   {
@@ -37,10 +40,13 @@ export const mockProjects = [
     projectId: 'EIT-2023-002',
     name: '数据分析平台建设',
     manager: '李四',
-    startDate: '2023-03-01',
-    endDate: '2023-09-30',
-    startPosition: 20,
-    duration: 40,
+    startDate: '2023-02-20',
+    endDate: '2023-05-15',
+    periods: [
+  { start: '2023-02-20', end: '2023-03-05', hours: 90, user: '李四', comment: '数据采集' },
+  { start: '2023-04-01', end: '2023-04-10', hours: 60, user: '王五', comment: '数据仓库搭建' },
+  { start: '2023-05-01', end: '2023-05-15', hours: 110, user: '赵六', comment: '平台开发' }
+    ],
     color: '#f39c12',
     plannedHours: 3600,
     usedHours: 1500,
@@ -52,15 +58,15 @@ export const mockProjects = [
     costVariance: 20000,
     description: '构建企业级数据分析平台，整合多源数据，提供实时分析与决策支持',
     milestones: [
-      { name: '数据调研完成', date: '2023-03-20', completed: true },
-      { name: '数据仓库搭建', date: '2023-05-30', completed: false },
-      { name: '分析模型开发', date: '2023-08-15', completed: false },
-      { name: '平台验收', date: '2023-09-30', completed: false }
+      { name: '数据调研完成', date: '2023-03-01', completed: true },
+      { name: '数据仓库搭建', date: '2023-04-01', completed: false },
+      { name: '分析模型开发', date: '2023-05-01', completed: false },
+      { name: '平台验收', date: '2023-05-15', completed: false }
     ],
     timeRecords: [
-      { date: '2023-05-01', user: '李四', hours: 8, task: '数据模型设计' },
-      { date: '2023-05-02', user: '王五', hours: 7, task: 'ETL流程开发' },
-      { date: '2023-05-03', user: '赵六', hours: 6, task: '可视化组件开发' }
+      { date: '2023-03-01', user: '李四', hours: 8, task: '数据模型设计' },
+      { date: '2023-03-02', user: '王五', hours: 7, task: 'ETL流程开发' },
+      { date: '2023-03-03', user: '赵六', hours: 6, task: '可视化组件开发' }
     ]
   },
   {
@@ -68,10 +74,13 @@ export const mockProjects = [
     projectId: 'EIT-2023-003',
     name: '移动应用开发',
     manager: '王五',
-    startDate: '2023-05-01',
-    endDate: '2023-11-30',
-    startPosition: 40,
-    duration: 35,
+    startDate: '2023-04-10',
+    endDate: '2023-06-25',
+    periods: [
+  { start: '2023-04-10', end: '2023-04-25', hours: 50, user: '王五', comment: '原型设计' },
+  { start: '2023-05-10', end: '2023-05-20', hours: 60, user: '赵六', comment: 'iOS开发' },
+  { start: '2023-06-01', end: '2023-06-25', hours: 70, user: '张三', comment: 'Android开发' }
+    ],
     color: '#e74c3c',
     plannedHours: 1800,
     usedHours: 450,
@@ -83,15 +92,78 @@ export const mockProjects = [
     costVariance: -10000,
     description: '开发面向最终用户的移动应用，支持iOS和Android平台，提供便捷的业务操作功能',
     milestones: [
-      { name: '原型设计完成', date: '2023-05-20', completed: false },
-      { name: 'iOS版本开发', date: '2023-08-30', completed: false },
-      { name: 'Android版本开发', date: '2023-09-30', completed: false },
-      { name: '应用发布', date: '2023-11-30', completed: false }
+      { name: '原型设计完成', date: '2023-04-20', completed: false },
+      { name: 'iOS版本开发', date: '2023-05-30', completed: false },
+      { name: 'Android版本开发', date: '2023-06-10', completed: false },
+      { name: '应用发布', date: '2023-06-25', completed: false }
     ],
     timeRecords: [
       { date: '2023-05-02', user: '王五', hours: 8, task: 'UI设计评审' },
       { date: '2023-05-03', user: '赵六', hours: 8, task: 'API接口对接' },
       { date: '2023-05-04', user: '张三', hours: 6, task: '前端框架搭建' }
+    ]
+  },
+
+  // mock 跨月、跨周项目
+  {
+    id: 4,
+    projectId: 'EIT-2023-004',
+    name: 'ERP系统升级',
+    manager: '赵六',
+    startDate: '2023-03-25',
+    endDate: '2023-04-15',
+    periods: [
+  { start: '2023-03-25', end: '2023-03-28', hours: 30, user: '赵六', comment: '调研与准备' },
+  { start: '2023-04-05', end: '2023-04-15', hours: 60, user: '张三', comment: '系统升级实施' }
+    ],
+    color: '#8e44ad',
+    plannedHours: 1200,
+    usedHours: 600,
+    progress: 50,
+    status: 'inProgress',
+    budget: 200000,
+    spent: 100000,
+    estimatedCost: 210000,
+    costVariance: 10000,
+    description: '企业ERP系统升级，提升业务流程自动化水平',
+    milestones: [
+      { name: '需求调研', date: '2023-03-28', completed: true },
+      { name: '系统开发', date: '2023-04-10', completed: false },
+      { name: '上线验收', date: '2023-04-15', completed: false }
+    ],
+    timeRecords: [
+      { date: '2023-03-26', user: '赵六', hours: 8, task: '需求分析' },
+      { date: '2023-04-01', user: '张三', hours: 7, task: '系统开发' }
+    ]
+  },
+  {
+    id: 5,
+    projectId: 'EIT-2023-005',
+    name: '新产品推广',
+    manager: '李四',
+    startDate: '2023-05-29',
+    endDate: '2023-06-05',
+    periods: [
+  { start: '2023-05-29', end: '2023-05-31', hours: 20, user: '李四', comment: '活动策划' },
+  { start: '2023-06-03', end: '2023-06-05', hours: 15, user: '王五', comment: '执行与总结' }
+    ],
+    color: '#16a085',
+    plannedHours: 600,
+    usedHours: 200,
+    progress: 20,
+    status: 'notStarted',
+    budget: 100000,
+    spent: 20000,
+    estimatedCost: 95000,
+    costVariance: -5000,
+    description: '新产品市场推广活动，覆盖多渠道',
+    milestones: [
+      { name: '活动策划', date: '2023-05-30', completed: false },
+      { name: '渠道对接', date: '2023-06-02', completed: false },
+      { name: '推广执行', date: '2023-06-05', completed: false }
+    ],
+    timeRecords: [
+      { date: '2023-05-29', user: '李四', hours: 8, task: '活动策划' }
     ]
   }
 ];

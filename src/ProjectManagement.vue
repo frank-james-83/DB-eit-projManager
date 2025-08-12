@@ -1,3 +1,4 @@
+    // ...existing code...
 <template>
   <div class="project-management-container">
     <!-- 标题栏 -->
@@ -156,8 +157,8 @@
           <h2>项目计划甘特图</h2>
           <div class="gantt-actions">
             <el-button-group size="small">
-              <el-button  @click="zoomOut"><el-icon><ZoomOut /></el-icon></el-button>
-              <el-button  @click="zoomIn"> <el-icon><ZoomIn /></el-icon></el-button>
+              <el-button @click="prevTimeRange"><el-icon><ArrowLeft /></el-icon></el-button>
+              <el-button @click="nextTimeRange"><el-icon><ArrowRight /></el-icon></el-button>
             </el-button-group>
             <el-select 
               v-model="timeRange" 
@@ -167,8 +168,6 @@
             >
               <el-option label="周视图" value="week"></el-option>
               <el-option label="月视图" value="month"></el-option>
-              <el-option label="季度视图" value="quarter"></el-option>
-              <el-option label="年视图" value="year"></el-option>
             </el-select>
             <el-date-picker
               v-model="dateRange"
@@ -187,11 +186,11 @@
         <div class="gantt-chart">
           <!-- 时间轴头部 -->
           <div class="gantt-timeline">
-            <div v-for="(month, index) in timelineMonths" :key="index" class="timeline-month">
-              {{ month }}
+            <div v-for="(item, index) in timelineHeaders" :key="index" class="timeline-month" style="text-align:center;">
+              <div>{{ item.label1 }}</div>
+              <div v-if="item.label2" style="font-size:12px;color:#888;">{{ item.label2 }}</div>
             </div>
           </div>
-          
           <!-- 甘特图项目行 -->
           <div 
             v-for="project in filteredProjects" 
@@ -199,14 +198,16 @@
             class="gantt-row"
             :class="{ 'gantt-row-active': activeProjectId === project.id }"
           >
-            <div class="gantt-task-bar" 
-                 :style="{ 
-                   left: `${project.startPosition}%`, 
-                   width: `${project.duration}%`,
-                   backgroundColor: project.color
-                 }">
-              <span class="task-label">{{ project.name }}</span>
-            </div>
+            <template v-if="project.periods && project.periods.length">
+              <div v-for="(period, idx) in project.periods" :key="idx" class="gantt-task-bar" :style="getGanttBarStyleByPeriod(period, project)">
+                <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <div class="gantt-task-bar" :style="getGanttBarStyle(project)">
+                <span class="task-label">{{ project.name }}</span>
+              </div>
+            </template>
           </div>
         </div>
       </section>
@@ -222,55 +223,93 @@
         </div>
         
         <el-tabs v-if="activeProject" type="card" class="detail-tabs" v-model="activeTab">
+          <!-- 基本信息 -->
           <el-tab-pane label="基本信息" name="basic">
-            <el-descriptions :column="1" border>
-              <el-descriptions-item label="项目编号">{{ activeProject.projectId }}</el-descriptions-item>
-              <el-descriptions-item label="项目名称">{{ activeProject.name }}</el-descriptions-item>
-              <el-descriptions-item label="项目经理">{{ activeProject.manager }}</el-descriptions-item>
-              <el-descriptions-item label="开始日期">{{ formatDate(activeProject.startDate) }}</el-descriptions-item>
-              <el-descriptions-item label="结束日期">{{ formatDate(activeProject.endDate) }}</el-descriptions-item>
-              <el-descriptions-item label="状态">{{ getStatusLabel(activeProject.status) }}</el-descriptions-item>
-              <el-descriptions-item label="项目描述">{{ activeProject.description }}</el-descriptions-item>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+              <el-button size="small" @click="toggleEdit('basic')">{{ editMode.basic ? '保存' : '编辑' }}</el-button>
+              <el-button v-if="editMode.basic" size="small" @click="cancelEdit('basic')">取消</el-button>
+            </div>
+            <el-descriptions :column="1" border v-if="!editMode.basic">
+              <el-descriptions-item label="项目编号">{{ activeProjectEdit.projectId }}</el-descriptions-item>
+              <el-descriptions-item label="项目名称">{{ activeProjectEdit.name }}</el-descriptions-item>
+              <el-descriptions-item label="项目经理">{{ activeProjectEdit.manager }}</el-descriptions-item>
+              <el-descriptions-item label="开始日期">{{ formatDate(activeProjectEdit.startDate) }}</el-descriptions-item>
+              <el-descriptions-item label="结束日期">{{ formatDate(activeProjectEdit.endDate) }}</el-descriptions-item>
+              <el-descriptions-item label="状态">{{ getStatusLabel(activeProjectEdit.status) }}</el-descriptions-item>
+              <el-descriptions-item label="项目描述">{{ activeProjectEdit.description }}</el-descriptions-item>
             </el-descriptions>
+            <el-form v-else :model="activeProjectEdit" label-width="80px" label-position="left">
+              <el-form-item label="项目编号"><el-input v-model="activeProjectEdit.projectId" /></el-form-item>
+              <el-form-item label="项目名称"><el-input v-model="activeProjectEdit.name" /></el-form-item>
+              <el-form-item label="项目经理"><el-input v-model="activeProjectEdit.manager" /></el-form-item>
+              <el-form-item label="开始日期"><el-date-picker v-model="activeProjectEdit.startDate" type="date" /></el-form-item>
+              <el-form-item label="结束日期"><el-date-picker v-model="activeProjectEdit.endDate" type="date" /></el-form-item>
+              <el-form-item label="状态">
+                <el-select v-model="activeProjectEdit.status">
+                  <el-option label="未开始" value="notStarted" />
+                  <el-option label="进行中" value="inProgress" />
+                  <el-option label="已完成" value="completed" />
+                  <el-option label="已延期" value="delayed" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="项目描述"><el-input v-model="activeProjectEdit.description" type="textarea" /></el-form-item>
+            </el-form>
           </el-tab-pane>
+          <!-- 财务数据 -->
           <el-tab-pane label="财务数据" name="financial">
-            <el-descriptions :column="2" border>
-              <el-descriptions-item label="预算金额">{{ formatCurrency(activeProject.budget) }}</el-descriptions-item>
-              <el-descriptions-item label="已使用金额">{{ formatCurrency(activeProject.spent) }}</el-descriptions-item>
-              <el-descriptions-item label="预计总成本">{{ formatCurrency(activeProject.estimatedCost) }}</el-descriptions-item>
-              <el-descriptions-item label="成本偏差">{{ formatCurrency(activeProject.costVariance) }}</el-descriptions-item>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+              <el-button size="small" @click="toggleEdit('financial')">{{ editMode.financial ? '保存' : '编辑' }}</el-button>
+              <el-button v-if="editMode.financial" size="small" @click="cancelEdit('financial')">取消</el-button>
+            </div>
+            <el-descriptions :column="2" border v-if="!editMode.financial">
+              <el-descriptions-item label="预算金额">{{ formatCurrency(activeProjectEdit.budget) }}</el-descriptions-item>
+              <el-descriptions-item label="已使用金额">{{ formatCurrency(activeProjectEdit.spent) }}</el-descriptions-item>
+              <el-descriptions-item label="预计总成本">{{ formatCurrency(activeProjectEdit.estimatedCost) }}</el-descriptions-item>
+              <el-descriptions-item label="成本偏差">{{ formatCurrency(activeProjectEdit.costVariance) }}</el-descriptions-item>
             </el-descriptions>
+            <el-form v-else :model="activeProjectEdit" label-width="100px" label-position="left">
+              <el-form-item label="预算金额"><el-input v-model.number="activeProjectEdit.budget" /></el-form-item>
+              <el-form-item label="已使用金额"><el-input v-model.number="activeProjectEdit.spent" /></el-form-item>
+              <el-form-item label="预计总成本"><el-input v-model.number="activeProjectEdit.estimatedCost" /></el-form-item>
+              <el-form-item label="成本偏差"><el-input v-model.number="activeProjectEdit.costVariance" /></el-form-item>
+            </el-form>
             <v-chart :option="financialChartOption" autoresize class="mt-4" style="height: 300px;" v-show="true"></v-chart>
           </el-tab-pane>
-          
+          <!-- 进度跟踪 -->
           <el-tab-pane label="进度跟踪" name="progress">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+              <el-button size="small" @click="toggleEdit('progress')">{{ editMode.progress ? '保存' : '编辑' }}</el-button>
+              <el-button v-if="editMode.progress" size="small" @click="cancelEdit('progress')">取消</el-button>
+            </div>
             <div class="progress-overview">
               <div class="progress-stats">
                 <div class="stat-item">
                   <div class="stat-label">总体进度</div>
-                  <div class="stat-value">{{ activeProject.progress }}%</div>
+                  <div class="stat-value" v-if="!editMode.progress">{{ activeProjectEdit.progress }}%</div>
+                  <el-input v-else v-model.number="activeProjectEdit.progress" style="width: 80px;" suffix="%" />
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">计划工时</div>
-                  <div class="stat-value">{{ activeProject.plannedHours }}h</div>
+                  <div class="stat-value" v-if="!editMode.progress">{{ activeProjectEdit.plannedHours }}h</div>
+                  <el-input v-else v-model.number="activeProjectEdit.plannedHours" style="width: 80px;" suffix="h" />
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">已用工时</div>
-                  <div class="stat-value">{{ activeProject.usedHours }}h</div>
+                  <div class="stat-value" v-if="!editMode.progress">{{ activeProjectEdit.usedHours }}h</div>
+                  <el-input v-else v-model.number="activeProjectEdit.usedHours" style="width: 80px;" suffix="h" />
                 </div>
               </div>
               <el-progress 
-                :percentage="activeProject.progress" 
+                :percentage="activeProjectEdit.progress" 
                 :stroke-width="8"
-                :stroke-color="getProgressColor(activeProject.progress)"
+                :stroke-color="getProgressColor(activeProjectEdit.progress)"
                 class="mt-4"
               ></el-progress>
             </div>
-            
             <h4 class="mt-4">关键里程碑</h4>
-            <el-timeline>
+            <el-timeline v-if="!editMode.progress">
               <el-timeline-item 
-                v-for="(milestone, index) in activeProject.milestones" 
+                v-for="(milestone, index) in activeProjectEdit.milestones" 
                 :key="index"
                 :timestamp="formatDate(milestone.date)"
                 :status="milestone.completed ? 'success' : 'process'"
@@ -281,16 +320,58 @@
                 </el-tag>
               </el-timeline-item>
             </el-timeline>
+            <el-table v-else :data="activeProjectEdit.milestones" border size="small" style="margin-bottom: 10px;">
+              <el-table-column prop="name" label="里程碑名称">
+                <template #default="scope">
+                  <el-input v-model="scope.row.name" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="date" label="日期">
+                <template #default="scope">
+                  <el-date-picker v-model="scope.row.date" type="date" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="completed" label="状态">
+                <template #default="scope">
+                  <el-switch v-model="scope.row.completed" active-text="已完成" inactive-text="进行中" />
+                </template>
+              </el-table-column>
+            </el-table>
           </el-tab-pane>
-          
+          <!-- 工时统计 -->
           <el-tab-pane label="工时统计" name="hours">
-            <el-table :data="activeProject.timeRecords" border size="small">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+              <el-button size="small" @click="toggleEdit('hours')">{{ editMode.hours ? '保存' : '编辑' }}</el-button>
+              <el-button v-if="editMode.hours" size="small" @click="cancelEdit('hours')">取消</el-button>
+            </div>
+            <el-table v-if="!editMode.hours" :data="activeProjectEdit.timeRecords" border size="small">
               <el-table-column prop="date" label="日期"></el-table-column>
               <el-table-column prop="user" label="人员"></el-table-column>
               <el-table-column prop="hours" label="工时"></el-table-column>
               <el-table-column prop="task" label="任务描述"></el-table-column>
             </el-table>
-            
+            <el-table v-else :data="activeProjectEdit.timeRecords" border size="small">
+              <el-table-column prop="date" label="日期">
+                <template #default="scope">
+                  <el-date-picker v-model="scope.row.date" type="date" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="user" label="人员">
+                <template #default="scope">
+                  <el-input v-model="scope.row.user" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="hours" label="工时">
+                <template #default="scope">
+                  <el-input v-model.number="scope.row.hours" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="task" label="任务描述">
+                <template #default="scope">
+                  <el-input v-model="scope.row.task" />
+                </template>
+              </el-table-column>
+            </el-table>
             <v-chart :option="hoursChartOption" autoresize class="mt-4" style="height: 300px;" v-if="activeTab === 'hours'"></v-chart>
           </el-tab-pane>
         </el-tabs>
@@ -307,7 +388,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { fetchProjects, addProject, updateProject, deleteProject } from './api/project';
 
 export default {
@@ -373,7 +454,6 @@ export default {
         arr = arr.filter(row => {
           const rowValue = row[prop] !== undefined && row[prop] !== null ? row[prop].toString().trim() : '';
           const match = values.map(v => v !== undefined && v !== null ? v.toString().trim() : '').includes(rowValue);
-          console.log(`[过滤测试] prop: ${prop}, rowValue: '${rowValue}', values:`, values, 'match:', match, 'row:', row);
           return match;
         });
       });
@@ -388,26 +468,105 @@ export default {
           }
         });
       }
-      console.log('[filteredProjects] 当前排序:', sortState.value, '过滤:', filterState.value, '结果:', arr.map(p => p.name));
       return arr;
     });
 
     // 监听表格排序
     const handleSortChange = ({ prop, order }) => {
       sortState.value = { prop, order };
-      console.log('[handleSortChange] 排序字段:', prop, '顺序:', order);
     };
     // 监听表格过滤
     const handleFilterChange = (filters) => {
       filterState.value = filters;
-      console.log('[handleFilterChange] 过滤条件:', filters);
     };
     
-    // 甘特图时间轴
-    const timelineMonths = ref([
-      '1月', '2月', '3月', '4月', '5月', '6月', 
-      '7月', '8月', '9月', '10月', '11月', '12月'
-    ]);
+    // 甘特图时间轴区间（动态）
+    const timelineHeaders = computed(() => {
+      if (timeRange.value === 'month') {
+        // 取当前 dateRange 范围内所有月份
+        const start = dateRange.value[0];
+        const end = dateRange.value[1];
+        const months = [];
+        let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+        while (cur <= end) {
+          months.push({
+            label1: `${cur.getFullYear()}-${(cur.getMonth() + 1).toString().padStart(2, '0')}`,
+            label2: ''
+          });
+          cur.setMonth(cur.getMonth() + 1);
+        }
+        return months;
+      } else if (timeRange.value === 'week') {
+        // 取当前 dateRange 范围内所有周（周一为起始）
+        const start = new Date(dateRange.value[0]);
+        const end = new Date(dateRange.value[1]);
+        let cur = new Date(start);
+        // 使 cur 指向本周一
+        cur.setDate(cur.getDate() - ((cur.getDay() + 6) % 7));
+        const weeks = [];
+        let weekIdx = 1;
+        while (cur <= end) {
+          const weekStart = new Date(cur);
+          // label1: W+周数
+          // label2: MM/dd（周一）
+          const m1 = (weekStart.getMonth() + 1).toString().padStart(2, '0');
+          const d1 = weekStart.getDate().toString().padStart(2, '0');
+          weeks.push({
+            label1: `W${weekIdx}`,
+            label2: `${m1}/${d1}`
+          });
+          cur.setDate(cur.getDate() + 7);
+          weekIdx++;
+        }
+        return weeks;
+      }
+      return [];
+    });
+
+    // 甘特条样式（根据当前视图类型动态计算 left/width）
+    function getGanttBarStyle(project) {
+      const start = dateRange.value[0];
+      const end = dateRange.value[1];
+      const total = end.getTime() - start.getTime();
+      const pStart = new Date(project.startDate);
+      const pEnd = new Date(project.endDate);
+      // 限制在区间内
+      const barStart = Math.max(pStart.getTime(), start.getTime());
+      const barEnd = Math.min(pEnd.getTime(), end.getTime());
+      const left = ((barStart - start.getTime()) / total) * 100;
+      const width = ((barEnd - barStart) / total) * 100;
+      return {
+        left: left + '%',
+        width: width + '%',
+        backgroundColor: project.color
+      };
+    }
+
+    // 多段periods渲染支持
+    function getGanttBarStyleByPeriod(period, project) {
+      const start = dateRange.value[0];
+      const end = dateRange.value[1];
+      const total = end.getTime() - start.getTime();
+      const pStart = new Date(period.start);
+      const pEnd = new Date(period.end);
+      // 限制在区间内
+      const barStart = Math.max(pStart.getTime(), start.getTime());
+      const barEnd = Math.min(pEnd.getTime(), end.getTime());
+      const left = ((barStart - start.getTime()) / total) * 100;
+      const width = ((barEnd - barStart) / total) * 100;
+      return {
+        left: left + '%',
+        width: width + '%',
+        backgroundColor: project.color
+      };
+    }
+    // 调试辅助：打印periods和函数可用性
+    onMounted(() => {
+      if (projects.value.length > 0) {
+        console.log('测试periods:', projects.value.map(p => p.periods));
+      }
+      console.log('getGanttBarStyleByPeriod:', typeof getGanttBarStyleByPeriod);
+    });
     
     // 图表数据
     const financialChartData = computed(() => {
@@ -538,7 +697,6 @@ export default {
     const canHide = (column) => {
       // 确保至少保留一列可见
       const visibleCount = Object.values(columns.value).filter(col => col.visible).length;
-      console.log('Visible count:', visibleCount, 'Current column:', column, 'Is visible:', columns.value[column].visible); // 添加调试日志
       return visibleCount > 1 || !columns.value[column].visible;
     };
     
@@ -572,13 +730,42 @@ export default {
     const formatCurrency = (value) => {
       return `¥${value.toLocaleString()}`;
     };
-    const zoomIn = () => {
-      if (zoomLevel.value < 2) zoomLevel.value += 0.2;
-    };
-    
-    const zoomOut = () => {
-      if (zoomLevel.value > 0.6) zoomLevel.value -= 0.2;
-    };
+
+    // 切换前/后时间区间
+    function prevTimeRange() {
+      if (timeRange.value === 'month') {
+        // 月视图，整体往前推一个月
+        const start = new Date(dateRange.value[0]);
+        const end = new Date(dateRange.value[1]);
+        start.setMonth(start.getMonth() - 1);
+        end.setMonth(end.getMonth() - 1);
+        dateRange.value = [start, end];
+      } else if (timeRange.value === 'week') {
+        // 周视图，整体往前推7天
+        const start = new Date(dateRange.value[0]);
+        const end = new Date(dateRange.value[1]);
+        start.setDate(start.getDate() - 7);
+        end.setDate(end.getDate() - 7);
+        dateRange.value = [start, end];
+      }
+    }
+    function nextTimeRange() {
+      if (timeRange.value === 'month') {
+        // 月视图，整体往后推一个月
+        const start = new Date(dateRange.value[0]);
+        const end = new Date(dateRange.value[1]);
+        start.setMonth(start.getMonth() + 1);
+        end.setMonth(end.getMonth() + 1);
+        dateRange.value = [start, end];
+      } else if (timeRange.value === 'week') {
+        // 周视图，整体往后推7天
+        const start = new Date(dateRange.value[0]);
+        const end = new Date(dateRange.value[1]);
+        start.setDate(start.getDate() + 7);
+        end.setDate(end.getDate() + 7);
+        dateRange.value = [start, end];
+      }
+    }
     
     const handleTimeRangeChange = (range) => {
       timeRange.value = range;
@@ -589,6 +776,41 @@ export default {
       // 初始化逻辑
     });
     
+    // 编辑模式相关
+    const editMode = ref({
+      basic: false,
+      financial: false,
+      progress: false,
+      hours: false
+    });
+    const activeProjectEdit = ref({});
+
+    // 切换编辑/保存
+    function toggleEdit(tab) {
+      if (!editMode.value[tab]) {
+        // 进入编辑模式，深拷贝当前数据
+        activeProjectEdit.value = JSON.parse(JSON.stringify(activeProject.value));
+        editMode.value[tab] = true;
+      } else {
+        // 保存，前台直接更新 projects
+        const idx = projects.value.findIndex(p => p.id === activeProjectEdit.value.id);
+        if (idx !== -1) {
+          projects.value[idx] = JSON.parse(JSON.stringify(activeProjectEdit.value));
+        }
+        editMode.value[tab] = false;
+      }
+    }
+    // 取消编辑
+    function cancelEdit(tab) {
+      editMode.value[tab] = false;
+      activeProjectEdit.value = JSON.parse(JSON.stringify(activeProject.value));
+    }
+
+    // 监听切换项目时同步编辑数据
+    watch(activeProject, (val) => {
+      if (val) activeProjectEdit.value = JSON.parse(JSON.stringify(val));
+    }, { immediate: true });
+
     return {
       searchQuery,
       timeRange,
@@ -597,11 +819,14 @@ export default {
       isDetailOpen,
       activeProjectId,
       activeProject,
+      activeProjectEdit,
       activeTab,
       columns,
       projects,
       filteredProjects,
-      timelineMonths,
+      timelineHeaders,
+      getGanttBarStyle,
+      getGanttBarStyleByPeriod,
       financialChartData,
       financialChartOption,
       hoursChartData,
@@ -616,11 +841,14 @@ export default {
       getStatusLabel,
       formatDate,
       formatCurrency,
-      zoomIn,
-      zoomOut,
-  handleTimeRangeChange,
-  handleSortChange,
-  handleFilterChange
+      prevTimeRange,
+      nextTimeRange,
+      handleTimeRangeChange,
+      handleSortChange,
+      handleFilterChange,
+      editMode,
+      toggleEdit,
+      cancelEdit
     };
   }
 };
@@ -665,9 +893,12 @@ export default {
 
 .main-content {
   display: flex;
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
   overflow: hidden;
   position: relative;
+  box-sizing: border-box;
 }
 
 .project-list-container {
@@ -711,11 +942,15 @@ export default {
 }
 
 .gantt-container {
-  flex: 1;
+  flex: 1 1 0%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: visible;
+  overflow-y: hidden;
   background-color: #f9fafc;
+  min-width: 0;
+  width: 100%;
+  align-self: stretch;
 }
 
 .gantt-controls {
@@ -736,10 +971,14 @@ export default {
 }
 
 .gantt-chart {
-  flex: 1;
-  overflow: auto;
-  padding: 20px;
+  flex: 1 1 0%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 20px 20px 20px 0;
   position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .gantt-timeline {
