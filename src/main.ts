@@ -15,11 +15,11 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { LineChart } from 'echarts/charts'
+import { LineChart, BarChart } from 'echarts/charts'
 import { GridComponent, ToolboxComponent, TitleComponent } from 'echarts/components'
 
 // 配置 Echarts
-use([CanvasRenderer, LineChart, GridComponent, ToolboxComponent, TitleComponent])
+use([CanvasRenderer, LineChart, BarChart, GridComponent, ToolboxComponent, TitleComponent])
 
 const app = createApp(App)
 

@@ -511,8 +511,19 @@ export default {
 
     // 工时图表配置
     const hoursChartOption = computed(() => {
-      if (!activeProject.value) return {}
-      
+      if (!activeProject.value || !activeProject.value.timeRecords) return {}
+
+      // 统计每个人的工时总和
+      const userHoursMap = {};
+      activeProject.value.timeRecords.forEach(record => {
+        if (!userHoursMap[record.user]) {
+          userHoursMap[record.user] = 0;
+        }
+        userHoursMap[record.user] += record.hours;
+      });
+      const users = Object.keys(userHoursMap);
+      const hours = users.map(user => userHoursMap[user]);
+
       return {
         title: {
           text: '人员工时统计'
@@ -522,7 +533,7 @@ export default {
         },
         xAxis: {
           type: 'category',
-          data: ['张三', '李四', '王五', '赵六']
+          data: users
         },
         yAxis: {
           type: 'value',
@@ -530,8 +541,11 @@ export default {
         },
         series: [
           {
-            data: [160, 140, 180, 120],
-            type: 'bar'
+            data: hours,
+            type: 'bar',
+            itemStyle: {
+              color: '#1e88e5'
+            }
           }
         ]
       }
