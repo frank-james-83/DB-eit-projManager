@@ -240,41 +240,42 @@
             class="gantt-row"
             :class="{ 'gantt-row-active': activeProjectId === project.id }"
           >
-            <template v-if="project.periods && project.periods.length">
-              <div v-for="(period, idx) in project.periods" :key="idx" class="gantt-task-bar" :style="getGanttBarStyleByPeriod(period, project)">
-                <el-tooltip
-                  effect="dark"
-                  placement="top"
-                  :content="getPeriodTooltip(period, project)"
-                  :open-delay="200"
+              <!-- period 条形图 -->
+              <template v-if="project.periods && project.periods.length">
+                <div v-for="(period, idx) in project.periods" :key="idx" class="gantt-task-bar" :style="getGanttBarStyleByPeriod(period, project)">
+                  <el-tooltip
+                    effect="dark"
+                    placement="top"
+                    :content="getPeriodTooltip(period, project)"
+                    :open-delay="200"
+                  >
+                    <div
+                      class="gantt-task-bar"
+                      :style="getGanttBarStyleByPeriod(period, project)"
+                      @click.stop="openPeriodEditDialog(project)"
+                      style="cursor:pointer;z-index:2;"
+                    >
+                      <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
+                    </div>
+                  </el-tooltip>
+                </div>
+              </template>
+              <template v-else>
+                <div class="gantt-task-bar" :style="getGanttBarStyle(project)">
+                  <span class="task-label">{{ project.name }}</span>
+                </div>
+              </template>
+              <!-- 关键里程碑菱形图标，独立于 period 条形图 -->
+              <template v-if="project.milestones && project.milestones.length">
+                <div v-for="(milestone, mIdx) in project.milestones" :key="mIdx"
+                  class="gantt-milestone"
+                  :style="getMilestoneStyle(milestone, project)"
                 >
-                  <div
-                    class="gantt-task-bar"
-                    :style="getGanttBarStyleByPeriod(period, project)"
-                    @click.stop="openPeriodEditDialog(project)"
-                    style="cursor:pointer;z-index:2;"
-                  >
-                    <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
-                  </div>
-                </el-tooltip>
-                <!-- 关键里程碑菱形图标 -->
-                <template v-if="idx === 0 && project.milestones && project.milestones.length">
-                  <div v-for="(milestone, mIdx) in project.milestones" :key="mIdx"
-                    class="gantt-milestone"
-                    :style="getMilestoneStyle(milestone, project)"
-                  >
-                    <el-tooltip effect="dark" placement="top" :content="getMilestoneTooltip(milestone)">
-                      <div :class="['milestone-diamond', milestone.completed ? 'milestone-completed' : '']"></div>
-                    </el-tooltip>
-                  </div>
-                </template>
-              </div>
-            </template>
-            <template v-else>
-              <div class="gantt-task-bar" :style="getGanttBarStyle(project)">
-                <span class="task-label">{{ project.name }}</span>
-              </div>
-            </template>
+                  <el-tooltip effect="dark" placement="top" :content="getMilestoneTooltip(milestone)">
+                    <div :class="['milestone-diamond', milestone.completed ? 'milestone-completed' : '']"></div>
+                  </el-tooltip>
+                </div>
+              </template>
           </div>
         </div>
       </section>
@@ -962,10 +963,12 @@ export default {
       const end = dateRange.value[1];
       const total = end.getTime() - start.getTime();
       const msDate = new Date(milestone.date);
-      const left = ((msDate.getTime() - start.getTime()) / total) * 100;
+      let left = ((msDate.getTime() - start.getTime()) / total) * 100;
+      // 限制在0-100%区间
+      left = Math.max(0, Math.min(left, 100));
       return {
         position: 'absolute',
-        top: '-12px',
+        top: '0', // 保证与gantt-row顶部对齐
         left: left + '%',
         zIndex: 3,
         width: '0',
@@ -1277,6 +1280,11 @@ export default {
 /* 关键里程碑菱形样式 */
 .gantt-milestone {
   pointer-events: auto;
+  height: 100%;
+  width: 0;
+  position: absolute;
+  top: 0;
+  /* left 由内联style控制 */
 }
 .milestone-diamond {
   width: 16px;
