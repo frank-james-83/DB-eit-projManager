@@ -184,6 +184,48 @@
         
         <!-- 甘特图组件 -->
         <div class="gantt-chart">
+      <!-- 全局唯一 period 编辑弹窗 -->
+      <el-dialog v-model="periodEditDialog.visible" title="编辑项目区间" width="600px" @close="closePeriodEditDialog">
+        <el-table :data="periodEditDialog.periods" border size="small">
+          <el-table-column prop="start" label="开始时间">
+            <template #default="scope">
+              <el-date-picker v-model="scope.row.start" type="date" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="end" label="结束时间">
+            <template #default="scope">
+              <el-date-picker v-model="scope.row.end" type="date" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="hours" label="工时">
+            <template #default="scope">
+              <el-input v-model.number="scope.row.hours" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="user" label="人员">
+            <template #default="scope">
+              <el-input v-model="scope.row.user" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="comment" label="备注">
+            <template #default="scope">
+              <el-input v-model="scope.row.comment" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="60">
+            <template #default="scope">
+              <el-button type="danger" size="small" icon="el-icon-delete" @click="removePeriod(scope.$index)" circle></el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div style="margin:10px 0;text-align:left;">
+          <el-button type="primary" size="small" @click="addPeriod">新增区间</el-button>
+        </div>
+        <template #footer>
+          <el-button @click="closePeriodEditDialog">取消</el-button>
+          <el-button type="primary" @click="confirmPeriodEdit">确认</el-button>
+        </template>
+      </el-dialog>
           <!-- 时间轴头部 -->
           <div class="gantt-timeline">
             <div v-for="(item, index) in timelineHeaders" :key="index" class="timeline-month" style="text-align:center;">
@@ -200,7 +242,21 @@
           >
             <template v-if="project.periods && project.periods.length">
               <div v-for="(period, idx) in project.periods" :key="idx" class="gantt-task-bar" :style="getGanttBarStyleByPeriod(period, project)">
-                <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
+                <el-tooltip
+                  effect="dark"
+                  placement="top"
+                  :content="getPeriodTooltip(period, project)"
+                  :open-delay="200"
+                >
+                  <div
+                    class="gantt-task-bar"
+                    :style="getGanttBarStyleByPeriod(period, project)"
+                    @click.stop="openPeriodEditDialog(project)"
+                    style="cursor:pointer;z-index:2;"
+                  >
+                    <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
+                  </div>
+                </el-tooltip>
               </div>
             </template>
             <template v-else>
@@ -776,6 +832,7 @@ export default {
       // 初始化逻辑
     });
     
+
     // 编辑模式相关
     const editMode = ref({
       basic: false,
@@ -784,6 +841,34 @@ export default {
       hours: false
     });
     const activeProjectEdit = ref({});
+
+    // period编辑弹窗及相关方法，必须在return前声明
+    const periodEditDialog = ref({ visible: false, projectId: null, periods: [] });
+    function getPeriodTooltip(period, project) {
+      return `开始: ${formatDate(period.start)}\n结束: ${formatDate(period.end)}\n工时: ${period.hours || ''}\n人员: ${period.user || ''}\n备注: ${period.comment || ''}`;
+    }
+    function openPeriodEditDialog(project) {
+      periodEditDialog.value.visible = true;
+      periodEditDialog.value.projectId = project.id;
+      periodEditDialog.value.periods = JSON.parse(JSON.stringify(project.periods || []));
+    }
+    function closePeriodEditDialog() {
+      periodEditDialog.value.visible = false;
+    }
+    function addPeriod() {
+      periodEditDialog.value.periods.push({ start: '', end: '', hours: 0, user: '', comment: '' });
+    }
+    function removePeriod(idx) {
+      periodEditDialog.value.periods.splice(idx, 1);
+    }
+    function confirmPeriodEdit() {
+      const pid = periodEditDialog.value.projectId;
+      const idx = projects.value.findIndex(p => p.id === pid);
+      if (idx !== -1) {
+        projects.value[idx].periods = JSON.parse(JSON.stringify(periodEditDialog.value.periods));
+      }
+      periodEditDialog.value.visible = false;
+    }
 
     // 切换编辑/保存
     function toggleEdit(tab) {
@@ -848,7 +933,15 @@ export default {
       handleFilterChange,
       editMode,
       toggleEdit,
-      cancelEdit
+      cancelEdit,
+      // period编辑相关
+      periodEditDialog,
+      getPeriodTooltip,
+      openPeriodEditDialog,
+      closePeriodEditDialog,
+      addPeriod,
+      removePeriod,
+      confirmPeriodEdit
     };
   }
 };
