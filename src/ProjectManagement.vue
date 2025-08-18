@@ -8,11 +8,17 @@
         <span>EIT项目管理系统</span>
       </div>
       <div class="header-actions">
-        <el-button type="primary" size="small"><el-icon><Plus /></el-icon>新建项目</el-button>
+        <el-button type="primary" size="small"><el-icon>
+            <Plus />
+          </el-icon>新建项目</el-button>
         <el-dropdown>
           <el-button size="small" class="ml-2">
-            <el-icon><Setting /></el-icon>
-            <el-icon><ArrowDown /></el-icon>
+            <el-icon>
+              <Setting />
+            </el-icon>
+            <el-icon>
+              <ArrowDown />
+            </el-icon>
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -34,118 +40,79 @@
             <!-- 列显示控制 -->
             <el-dropdown trigger="click">
               <el-button size="small">
-                <el-icon><DataAnalysis /></el-icon>
+                <el-icon>
+                  <DataAnalysis />
+                </el-icon>
                 列设置
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="projectId" :disabled="!canHide('projectId')">
-                    <el-checkbox :model-value="columns.projectId.visible" @change="() => handleColumnChange('projectId')">项目编号</el-checkbox>
+                    <el-checkbox :model-value="columns.projectId.visible"
+                      @change="() => handleColumnChange('projectId')">项目编号</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="name" :disabled="!canHide('name')">
-                    <el-checkbox :model-value="columns.name.visible" @change="() => handleColumnChange('name')">项目名称</el-checkbox>
+                    <el-checkbox :model-value="columns.name.visible"
+                      @change="() => handleColumnChange('name')">项目名称</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="manager" :disabled="!canHide('manager')">
-                    <el-checkbox :model-value="columns.manager.visible" @change="() => handleColumnChange('manager')">项目经理</el-checkbox>
+                    <el-checkbox :model-value="columns.manager.visible"
+                      @change="() => handleColumnChange('manager')">项目经理</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="plannedHours" :disabled="!canHide('plannedHours')">
-                    <el-checkbox :model-value="columns.plannedHours.visible" @change="() => handleColumnChange('plannedHours')">计划工时</el-checkbox>
+                    <el-checkbox :model-value="columns.plannedHours.visible"
+                      @change="() => handleColumnChange('plannedHours')">计划工时</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="usedHours" :disabled="!canHide('usedHours')">
-                    <el-checkbox :model-value="columns.usedHours.visible" @change="() => handleColumnChange('usedHours')">已用工时</el-checkbox>
+                    <el-checkbox :model-value="columns.usedHours.visible"
+                      @change="() => handleColumnChange('usedHours')">已用工时</el-checkbox>
                   </el-dropdown-item>
                   <el-dropdown-item command="progress" :disabled="!canHide('progress')">
-                    <el-checkbox :model-value="columns.progress.visible" @change="() => handleColumnChange('progress')">进度</el-checkbox>
+                    <el-checkbox :model-value="columns.progress.visible"
+                      @change="() => handleColumnChange('progress')">进度</el-checkbox>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            
+
             <!-- 搜索框 -->
-            <el-input 
-              placeholder="搜索项目" 
-              size="small" 
-              v-model="searchQuery"
-              class="search-input"
-            >
-              <el-button slot="append" size="small"><el-icon><Search /></el-icon></el-button>
+            <el-input placeholder="搜索项目" size="small" v-model="searchQuery" class="search-input">
+              <el-button slot="append" size="small"><el-icon>
+                  <Search />
+                </el-icon></el-button>
             </el-input>
           </div>
         </div>
-        
+
         <!-- 项目表格 -->
-        <el-table 
-          :data="filteredProjects" 
-          border 
-          size="small"
-          :row-style="{ height: '40px' }"
-          @row-click="handleProjectClick"
-          @sort-change="handleSortChange"
-          @filter-change="handleFilterChange"
-          class="project-table"
-        >
-          <el-table-column 
-            v-if="columns.projectId.visible"
-            prop="projectId" 
-            column-key="projectId"
-            label="项目编号" 
-            sortable
-            :filters="[{text: 'EIT-2023', value: 'EIT-2023'}, {text: 'EIT-2024', value: 'EIT-2024'}]"
-            :filter-method="(value, row) => row.projectId.includes(value)"
-          ></el-table-column>
-          
-          <el-table-column 
-            v-if="columns.name.visible"
-            prop="name" 
-            column-key="name"
-            label="项目名称" 
-            sortable
-            :filter-method="(value, row) => row.name.includes(value)"
-          >
+        <el-table :data="filteredProjects" border size="small" :row-style="{ height: '40px' }"
+          @row-click="handleProjectClick" @sort-change="handleSortChange" @filter-change="handleFilterChange"
+          class="project-table">
+          <el-table-column v-if="columns.projectId.visible" prop="projectId" column-key="projectId" label="项目编号"
+            sortable :filters="[{ text: 'EIT-2023', value: 'EIT-2023' }, { text: 'EIT-2024', value: 'EIT-2024' }]"
+            :filter-method="(value, row) => row.projectId.includes(value)"></el-table-column>
+
+          <el-table-column v-if="columns.name.visible" prop="name" column-key="name" label="项目名称" sortable
+            :filter-method="(value, row) => row.name.includes(value)">
             <template #default="scope">
               <span class="project-name" @click.stop="handleProjectNameClick(scope.row)">{{ scope.row.name }}</span>
             </template>
           </el-table-column>
-          
-          <el-table-column 
-            v-if="columns.manager.visible"
-            prop="manager" 
-            column-key="manager"
-            label="项目经理" 
-            sortable
-            :filters="getUniqueManagers().map(m => ({text: m, value: m}))"
-            :filter-method="(value, row) => row.manager === value"
-          ></el-table-column>
-          
-          <el-table-column 
-            v-if="columns.plannedHours.visible"
-            prop="plannedHours" 
-            column-key="plannedHours"
-            label="计划工时" 
-            sortable
-          ></el-table-column>
-          
-          <el-table-column 
-            v-if="columns.usedHours.visible"
-            prop="usedHours" 
-            column-key="usedHours"
-            label="已用工时" 
-            sortable
-          ></el-table-column>
-          
-          <el-table-column 
-            v-if="columns.progress.visible"
-            prop="progress" 
-            column-key="progress"
-            label="进度" 
-            sortable
-          >
+
+          <el-table-column v-if="columns.manager.visible" prop="manager" column-key="manager" label="项目经理" sortable
+            :filters="getUniqueManagers().map(m => ({ text: m, value: m }))"
+            :filter-method="(value, row) => row.manager === value"></el-table-column>
+
+          <el-table-column v-if="columns.plannedHours.visible" prop="plannedHours" column-key="plannedHours"
+            label="计划工时" sortable></el-table-column>
+
+          <el-table-column v-if="columns.usedHours.visible" prop="usedHours" column-key="usedHours" label="已用工时"
+            sortable></el-table-column>
+
+          <el-table-column v-if="columns.progress.visible" prop="progress" column-key="progress" label="进度" sortable>
             <template #default="scope">
-              <el-progress 
-                :percentage="scope.row.progress" 
-                :stroke-width="6"
-                :stroke-color="getProgressColor(scope.row.progress)"
-              ></el-progress>
+              <el-progress :percentage="scope.row.progress" :stroke-width="6"
+                :stroke-color="getProgressColor(scope.row.progress)"></el-progress>
             </template>
           </el-table-column>
         </el-table>
@@ -157,125 +124,112 @@
           <h2>项目计划甘特图</h2>
           <div class="gantt-actions">
             <el-button-group size="small">
-              <el-button @click="prevTimeRange"><el-icon><ArrowLeft /></el-icon></el-button>
-              <el-button @click="nextTimeRange"><el-icon><ArrowRight /></el-icon></el-button>
+              <el-button @click="prevTimeRange"><el-icon>
+                  <ArrowLeft />
+                </el-icon></el-button>
+              <el-button @click="nextTimeRange"><el-icon>
+                  <ArrowRight />
+                </el-icon></el-button>
             </el-button-group>
-            <el-select 
-              v-model="timeRange" 
-              size="small" 
-              class="ml-2"
-              @change="handleTimeRangeChange"
-            >
+            <el-select v-model="timeRange" size="small" class="ml-2" @change="handleTimeRangeChange">
               <el-option label="周视图" value="week"></el-option>
               <el-option label="月视图" value="month"></el-option>
             </el-select>
-            <el-date-picker
-              v-model="dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              size="small"
-              class="ml-2 gantt-date-picker"
-              style="min-width: 260px; width: 320px;"
-            ></el-date-picker>
+            <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
+              end-placeholder="结束日期" size="small" class="ml-2 gantt-date-picker"
+              style="min-width: 260px; width: 320px;"></el-date-picker>
           </div>
         </div>
-        
+
         <!-- 甘特图组件 -->
         <div class="gantt-chart">
-      <!-- 全局唯一 period 编辑弹窗 -->
-      <el-dialog v-model="periodEditDialog.visible" title="编辑项目区间" width="600px" @close="closePeriodEditDialog">
-        <el-table :data="periodEditDialog.periods" border size="small">
-          <el-table-column prop="start" label="开始时间">
-            <template #default="scope">
-              <el-date-picker v-model="scope.row.start" type="date" size="small" />
+          <!-- 全局唯一 period 编辑弹窗 -->
+          <el-dialog v-model="periodEditDialog.visible" title="编辑项目区间" width="600px" @close="closePeriodEditDialog">
+            <el-table :data="periodEditDialog.periods" border size="small">
+              <el-table-column prop="start" label="开始时间">
+                <template #default="scope">
+                  <el-date-picker v-model="scope.row.start" type="date" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="end" label="结束时间">
+                <template #default="scope">
+                  <el-date-picker v-model="scope.row.end" type="date" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="hours" label="工时">
+                <template #default="scope">
+                  <el-input v-model.number="scope.row.hours" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="user" label="人员">
+                <template #default="scope">
+                  <el-input v-model="scope.row.user" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="comment" label="备注">
+                <template #default="scope">
+                  <el-input v-model="scope.row.comment" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="60">
+                <template #default="scope">
+                  <el-button type="danger" size="small" icon="el-icon-delete" @click="removePeriod(scope.$index)"
+                    circle></el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div style="margin:10px 0;text-align:left;">
+              <el-button type="primary" size="small" @click="addPeriod">新增区间</el-button>
+            </div>
+            <template #footer>
+              <el-button @click="closePeriodEditDialog">取消</el-button>
+              <el-button type="primary" @click="confirmPeriodEdit">确认</el-button>
             </template>
-          </el-table-column>
-          <el-table-column prop="end" label="结束时间">
-            <template #default="scope">
-              <el-date-picker v-model="scope.row.end" type="date" size="small" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="hours" label="工时">
-            <template #default="scope">
-              <el-input v-model.number="scope.row.hours" size="small" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="user" label="人员">
-            <template #default="scope">
-              <el-input v-model="scope.row.user" size="small" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="comment" label="备注">
-            <template #default="scope">
-              <el-input v-model="scope.row.comment" size="small" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="60">
-            <template #default="scope">
-              <el-button type="danger" size="small" icon="el-icon-delete" @click="removePeriod(scope.$index)" circle></el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div style="margin:10px 0;text-align:left;">
-          <el-button type="primary" size="small" @click="addPeriod">新增区间</el-button>
-        </div>
-        <template #footer>
-          <el-button @click="closePeriodEditDialog">取消</el-button>
-          <el-button type="primary" @click="confirmPeriodEdit">确认</el-button>
-        </template>
-      </el-dialog>
+          </el-dialog>
           <!-- 时间轴头部 -->
           <div class="gantt-timeline">
-            <div v-for="(item, index) in timelineHeaders" :key="index" class="timeline-month" style="text-align:center;">
+            <div v-for="(item, index) in timelineHeaders" :key="index" class="timeline-month"
+              style="text-align:center;">
               <div>{{ item.label1 }}</div>
               <div v-if="item.label2" style="font-size:12px;color:#888;">{{ item.label2 }}</div>
             </div>
           </div>
           <!-- 甘特图项目行 -->
-          <div 
-            v-for="project in filteredProjects" 
-            :key="project.id" 
-            class="gantt-row"
-            :class="{ 'gantt-row-active': activeProjectId === project.id }"
-          >
-              <!-- period 条形图 -->
-              <template v-if="project.periods && project.periods.length">
-                <div v-for="(period, idx) in project.periods" :key="idx" class="gantt-task-bar" :style="getGanttBarStyleByPeriod(period, project)">
-                  <el-tooltip
-                    effect="dark"
-                    placement="top"
-                    :content="getPeriodTooltip(period, project)"
-                    :open-delay="200"
-                  >
-                    <div
-                      class="gantt-task-bar"
-                      :style="getGanttBarStyleByPeriod(period, project)"
-                      @click.stop="openPeriodEditDialog(project)"
-                      style="cursor:pointer;z-index:2;"
-                    >
-                      <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
-                    </div>
-                  </el-tooltip>
-                </div>
-              </template>
-              <template v-else>
-                <div class="gantt-task-bar" :style="getGanttBarStyle(project)">
-                  <span class="task-label">{{ project.name }}</span>
-                </div>
-              </template>
-              <!-- 关键里程碑菱形图标，独立于 period 条形图 -->
-              <template v-if="project.milestones && project.milestones.length">
-                <div v-for="(milestone, mIdx) in project.milestones" :key="mIdx"
-                  class="gantt-milestone"
-                  :style="getMilestoneStyle(milestone, project)"
-                >
-                  <el-tooltip effect="dark" placement="top" :content="getMilestoneTooltip(milestone)">
+          <div v-for="project in filteredProjects" :key="project.id" class="gantt-row"
+            :class="{ 'gantt-row-active': activeProjectId === project.id }">
+            <!-- period 条形图 -->
+            <template v-if="project.periods && project.periods.length">
+              <div v-for="(period, idx) in project.periods" :key="idx">
+                <el-tooltip effect="dark" placement="top" :content="getPeriodTooltip(period, project)"
+                  popper-class="multi-line-tooltip" :open-delay="200"
+                  popper-style="white-space: pre-line; line-height: 1.5;">
+                  <div class="gantt-task-bar" :style="getGanttBarStyleByPeriod(period, project)"
+                    @click.stop="openPeriodEditDialog(project)" style="cursor:pointer;z-index:2;">
+                    <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
+                  </div>
+                </el-tooltip>
+
+              </div>
+            </template>
+
+            <!-- 里程碑-->
+            <template v-if="project.milestones && project.milestones.length">
+              <div v-for="(milestone, mIdx) in project.milestones" :key="mIdx" class="gantt-milestone"
+                :style="getMilestoneStyle(milestone, project)">
+                <el-tooltip effect="dark" placement="top" :content="getMilestoneTooltip(milestone)"
+                  popper-class="multi-line-tooltip" :open-delay="200"
+                  popper-style="white-space: pre-line; line-height: 1.5;">
+                  <div class="milestone-container">
                     <div :class="['milestone-diamond', milestone.completed ? 'milestone-completed' : '']"></div>
-                  </el-tooltip>
-                </div>
-              </template>
+                    <div v-if="milestone.tag"
+                      :class="['milestone-tag', milestone.completed ? 'milestone-completed' : '']">
+                      {{ milestone.tag }}
+                    </div>
+                  </div>
+                </el-tooltip>
+              </div>
+            </template>
+
           </div>
         </div>
       </section>
@@ -284,12 +238,11 @@
       <div class="detail-panel" :class="{ 'panel-open': isDetailOpen }">
         <div class="panel-header">
           <h2>{{ activeProject?.name || '项目详情' }}</h2>
-          <el-button 
-            size="small" 
-            @click="closeDetailPanel"
-          ><el-icon><Close /></el-icon></el-button>
+          <el-button size="small" @click="closeDetailPanel"><el-icon>
+              <Close />
+            </el-icon></el-button>
         </div>
-        
+
         <el-tabs v-if="activeProject" type="card" class="detail-tabs" v-model="activeTab">
           <!-- 基本信息 -->
           <el-tab-pane label="基本信息" name="basic">
@@ -310,8 +263,10 @@
               <el-form-item label="项目编号"><el-input v-model="activeProjectEdit.projectId" /></el-form-item>
               <el-form-item label="项目名称"><el-input v-model="activeProjectEdit.name" /></el-form-item>
               <el-form-item label="项目经理"><el-input v-model="activeProjectEdit.manager" /></el-form-item>
-              <el-form-item label="开始日期"><el-date-picker v-model="activeProjectEdit.startDate" type="date" /></el-form-item>
-              <el-form-item label="结束日期"><el-date-picker v-model="activeProjectEdit.endDate" type="date" /></el-form-item>
+              <el-form-item label="开始日期"><el-date-picker v-model="activeProjectEdit.startDate"
+                  type="date" /></el-form-item>
+              <el-form-item label="结束日期"><el-date-picker v-model="activeProjectEdit.endDate"
+                  type="date" /></el-form-item>
               <el-form-item label="状态">
                 <el-select v-model="activeProjectEdit.status">
                   <el-option label="未开始" value="notStarted" />
@@ -320,20 +275,24 @@
                   <el-option label="已延期" value="delayed" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="项目描述"><el-input v-model="activeProjectEdit.description" type="textarea" /></el-form-item>
+              <el-form-item label="项目描述"><el-input v-model="activeProjectEdit.description"
+                  type="textarea" /></el-form-item>
             </el-form>
           </el-tab-pane>
           <!-- 财务数据 -->
           <el-tab-pane label="财务数据" name="financial">
             <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-              <el-button size="small" @click="toggleEdit('financial')">{{ editMode.financial ? '保存' : '编辑' }}</el-button>
+              <el-button size="small" @click="toggleEdit('financial')">{{ editMode.financial ? '保存' : '编辑'
+              }}</el-button>
               <el-button v-if="editMode.financial" size="small" @click="cancelEdit('financial')">取消</el-button>
             </div>
             <el-descriptions :column="2" border v-if="!editMode.financial">
               <el-descriptions-item label="预算金额">{{ formatCurrency(activeProjectEdit.budget) }}</el-descriptions-item>
               <el-descriptions-item label="已使用金额">{{ formatCurrency(activeProjectEdit.spent) }}</el-descriptions-item>
-              <el-descriptions-item label="预计总成本">{{ formatCurrency(activeProjectEdit.estimatedCost) }}</el-descriptions-item>
-              <el-descriptions-item label="成本偏差">{{ formatCurrency(activeProjectEdit.costVariance) }}</el-descriptions-item>
+              <el-descriptions-item label="预计总成本">{{ formatCurrency(activeProjectEdit.estimatedCost)
+              }}</el-descriptions-item>
+              <el-descriptions-item label="成本偏差">{{ formatCurrency(activeProjectEdit.costVariance)
+              }}</el-descriptions-item>
             </el-descriptions>
             <el-form v-else :model="activeProjectEdit" label-width="100px" label-position="left">
               <el-form-item label="预算金额"><el-input v-model.number="activeProjectEdit.budget" /></el-form-item>
@@ -341,7 +300,8 @@
               <el-form-item label="预计总成本"><el-input v-model.number="activeProjectEdit.estimatedCost" /></el-form-item>
               <el-form-item label="成本偏差"><el-input v-model.number="activeProjectEdit.costVariance" /></el-form-item>
             </el-form>
-            <v-chart :option="financialChartOption" autoresize class="mt-4" style="height: 300px;" v-show="true"></v-chart>
+            <v-chart :option="financialChartOption" autoresize class="mt-4" style="height: 300px;"
+              v-show="true"></v-chart>
           </el-tab-pane>
           <!-- 进度跟踪 -->
           <el-tab-pane label="进度跟踪" name="progress">
@@ -367,21 +327,13 @@
                   <el-input v-else v-model.number="activeProjectEdit.usedHours" style="width: 80px;" suffix="h" />
                 </div>
               </div>
-              <el-progress 
-                :percentage="activeProjectEdit.progress" 
-                :stroke-width="8"
-                :stroke-color="getProgressColor(activeProjectEdit.progress)"
-                class="mt-4"
-              ></el-progress>
+              <el-progress :percentage="activeProjectEdit.progress" :stroke-width="8"
+                :stroke-color="getProgressColor(activeProjectEdit.progress)" class="mt-4"></el-progress>
             </div>
             <h4 class="mt-4">关键里程碑</h4>
             <el-timeline v-if="!editMode.progress">
-              <el-timeline-item 
-                v-for="(milestone, index) in activeProjectEdit.milestones" 
-                :key="index"
-                :timestamp="formatDate(milestone.date)"
-                :status="milestone.completed ? 'success' : 'process'"
-              >
+              <el-timeline-item v-for="(milestone, index) in activeProjectEdit.milestones" :key="index"
+                :timestamp="formatDate(milestone.date)" :status="milestone.completed ? 'success' : 'process'">
                 {{ milestone.name }}
                 <el-tag :type="milestone.completed ? 'success' : 'info'" size="small" class="ml-2">
                   {{ milestone.completed ? '已完成' : '进行中' }}
@@ -440,17 +392,14 @@
                 </template>
               </el-table-column>
             </el-table>
-            <v-chart :option="hoursChartOption" autoresize class="mt-4" style="height: 300px;" v-if="activeTab === 'hours'"></v-chart>
+            <v-chart :option="hoursChartOption" autoresize class="mt-4" style="height: 300px;"
+              v-if="activeTab === 'hours'"></v-chart>
           </el-tab-pane>
         </el-tabs>
       </div>
-      
+
       <!-- 遮罩层 -->
-      <div 
-        class="panel-mask" 
-        :class="{ 'mask-visible': isDetailOpen }"
-        @click="closeDetailPanel"
-      ></div>
+      <div class="panel-mask" :class="{ 'mask-visible': isDetailOpen }" @click="closeDetailPanel"></div>
     </div>
   </div>
 </template>
@@ -478,7 +427,7 @@ export default {
     const activeProject = computed(() => {
       return projects.value.find(p => p.id === activeProjectId.value) || null;
     });
-    
+
     // 列显示控制配置
     const columns = ref({
       projectId: { visible: true },
@@ -488,7 +437,7 @@ export default {
       usedHours: { visible: true },
       progress: { visible: true }
     });
-    
+
     // 项目数据（后续用API获取）
     const projects = ref([]);
 
@@ -496,7 +445,7 @@ export default {
     onMounted(async () => {
       projects.value = await fetchProjects();
     });
-    
+
     // 排序和过滤状态
     const sortState = ref({ prop: '', order: '' });
     const filterState = ref({});
@@ -507,8 +456,8 @@ export default {
       // 搜索框过滤
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        arr = arr.filter(project => 
-          project.name.toLowerCase().includes(query) || 
+        arr = arr.filter(project =>
+          project.name.toLowerCase().includes(query) ||
           project.projectId.toLowerCase().includes(query) ||
           project.manager.toLowerCase().includes(query)
         );
@@ -547,7 +496,7 @@ export default {
     const handleFilterChange = (filters) => {
       filterState.value = filters;
     };
-    
+
     // 甘特图时间轴区间（动态）
     const timelineHeaders = computed(() => {
       if (timeRange.value === 'month') {
@@ -635,7 +584,7 @@ export default {
       }
       console.log('getGanttBarStyleByPeriod:', typeof getGanttBarStyleByPeriod);
     });
-    
+
     // 图表数据
     const financialChartData = computed(() => {
       if (!activeProject.value) return [];
@@ -651,7 +600,7 @@ export default {
     // 财务图表配置
     const financialChartOption = computed(() => {
       if (!activeProject.value) return {}
-      
+
       return {
         title: {
           text: '财务数据趋势'
@@ -690,7 +639,7 @@ export default {
         ]
       }
     })
-    
+
     const hoursChartData = computed(() => {
       if (!activeProject.value) return [];
       return [
@@ -742,44 +691,44 @@ export default {
         ]
       }
     })
-    
+
     // 方法
     const handleProjectClick = (project) => {
       activeProjectId.value = project.id;
     };
-    
+
     const handleProjectNameClick = (project) => {
       activeProjectId.value = project.id;
       isDetailOpen.value = true;
     };
-    
+
     const closeDetailPanel = () => {
       isDetailOpen.value = false;
     };
-    
+
     const handleColumnChange = (column) => {
       // 切换列的显示状态
       columns.value[column].visible = !columns.value[column].visible;
     };
-    
+
     const canHide = (column) => {
       // 确保至少保留一列可见
       const visibleCount = Object.values(columns.value).filter(col => col.visible).length;
       return visibleCount > 1 || !columns.value[column].visible;
     };
-    
+
     const getUniqueManagers = () => {
       const managers = new Set();
       projects.value.forEach(project => managers.add(project.manager));
       return Array.from(managers);
     };
-    
+
     const getProgressColor = (progress) => {
       if (progress < 30) return '#e74c3c';
       if (progress < 70) return '#f39c12';
       return '#42b983';
     };
-    
+
     const getStatusLabel = (status) => {
       const statusMap = {
         'notStarted': '未开始',
@@ -789,12 +738,12 @@ export default {
       };
       return statusMap[status] || status;
     };
-    
+
     const formatDate = (dateString) => {
       const date = new Date(dateString);
       return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     };
-    
+
     const formatCurrency = (value) => {
       return `¥${value.toLocaleString()}`;
     };
@@ -834,16 +783,16 @@ export default {
         dateRange.value = [start, end];
       }
     }
-    
+
     const handleTimeRangeChange = (range) => {
       timeRange.value = range;
       // 根据时间范围调整甘特图显示
     };
-    
+
     onMounted(() => {
       // 初始化逻辑
     });
-    
+
 
     // 编辑模式相关
     const editMode = ref({
@@ -857,7 +806,14 @@ export default {
     // period编辑弹窗及相关方法，必须在return前声明
     const periodEditDialog = ref({ visible: false, projectId: null, periods: [] });
     function getPeriodTooltip(period, project) {
-      return `开始: ${formatDate(period.start)}\n结束: ${formatDate(period.end)}\n工时: ${period.hours || ''}\n人员: ${period.user || ''}\n备注: ${period.comment || ''}`;
+      const lines = [];
+      lines.push(`开始: ${formatDate(period.start)}  结束: ${formatDate(period.end)}`);
+      if (period.hours) lines.push(`工时: ${period.hours}`);
+      const details = [];
+      if (period.user) details.push(`人员: ${period.user}`);
+      if (period.comment) details.push(`备注: ${period.comment}`);
+      if (details.length > 0) lines.push(details.join('  '));
+      return lines.join('\n');
     }
     function openPeriodEditDialog(project) {
       periodEditDialog.value.visible = true;
@@ -954,8 +910,8 @@ export default {
       addPeriod,
       removePeriod,
       confirmPeriodEdit
-      ,getMilestoneStyle
-      ,getMilestoneTooltip
+      , getMilestoneStyle
+      , getMilestoneTooltip
     };
     // 计算milestone菱形在甘特条上的left百分比
     function getMilestoneStyle(milestone, project) {
@@ -978,7 +934,11 @@ export default {
     }
     // 里程碑tooltip内容
     function getMilestoneTooltip(milestone) {
-      return `${milestone.name} (${formatDate(milestone.date)})\n状态: ${milestone.completed ? '已完成' : '进行中'}`;
+      let tooltipText = `${milestone.name} (${formatDate(milestone.date)})\n状态: ${milestone.completed ? '已完成' : '进行中'}`;
+      if (milestone.tag) {
+        tooltipText += `\n标签: ${milestone.tag}`;
+      }
+      return tooltipText;
     }
   }
 };
@@ -1135,7 +1095,7 @@ export default {
   padding-left: 10px;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .gantt-row-active {
@@ -1143,10 +1103,10 @@ export default {
 }
 
 .gantt-task-bar {
-  height: 24px;
+  height: 20px;
   border-radius: 4px;
   position: absolute;
-  top: 8px;
+  top: 16px;
   bottom: 8px;
   display: flex;
   align-items: center;
@@ -1156,6 +1116,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
+
 /* 表格内容强制单行显示，防止因换行导致行高变化 */
 .project-table .el-table__cell {
   white-space: nowrap;
@@ -1261,7 +1222,7 @@ export default {
   .project-list-container {
     width: 300px;
   }
-  
+
   .detail-panel {
     width: 400px;
   }
@@ -1271,7 +1232,7 @@ export default {
   .project-list-container {
     width: 250px;
   }
-  
+
   .detail-panel {
     width: 350px;
   }
@@ -1286,20 +1247,55 @@ export default {
   top: 0;
   /* left 由内联style控制 */
 }
+
+.milestone-container {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .milestone-diamond {
-  width: 16px;
-  height: 16px;
+  width: 8px;
+  height: 8px;
   background: #fff;
   border: 2px solid #e67e22;
   transform: rotate(45deg);
   position: absolute;
-  top: 0;
+  top: 12px;
   left: -8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   z-index: 4;
 }
+
 .milestone-completed {
   background: #42b983;
   border-color: #42b983;
+}
+
+.milestone-tag {
+  position: absolute;
+  top: -2px;
+  left: -15px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #e67e22;
+  white-space: nowrap;
+  z-index: 4;
+  padding: 0px 0px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e67e22;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.milestone-tag.milestone-completed {
+  color: #42b983;
+  border-color: #42b983;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 </style>

@@ -23,10 +23,10 @@ export const mockProjects = [
     costVariance: -20000,
     description: '为某汽车制造企业开发智能工厂管理系统，实现生产流程自动化与数据可视化',
     milestones: [
-      { name: '需求分析完成', date: '2023-02-10', completed: true },
-      { name: '系统设计完成', date: '2023-03-01', completed: true },
-      { name: '核心模块开发', date: '2023-03-05', completed: false },
-      { name: '系统上线', date: '2023-03-10', completed: false }
+      { name: '需求分析完成', date: '2023-02-10', completed: true, tag: 'KO' },
+      { name: '系统设计完成', date: '2023-03-01', completed: true, tag: 'DL' },
+      { name: '核心模块开发', date: '2023-03-05', completed: false, tag: 'P' },
+      { name: '系统上线', date: '2023-03-10', completed: false, tag: 'FSB' }
     ],
     timeRecords: [
       { date: '2023-02-01', user: '张三', hours: 8, task: '系统架构优化' },
@@ -58,10 +58,10 @@ export const mockProjects = [
     costVariance: 20000,
     description: '构建企业级数据分析平台，整合多源数据，提供实时分析与决策支持',
     milestones: [
-      { name: '数据调研完成', date: '2023-03-01', completed: true },
-      { name: '数据仓库搭建', date: '2023-04-01', completed: false },
-      { name: '分析模型开发', date: '2023-05-01', completed: false },
-      { name: '平台验收', date: '2023-05-15', completed: false }
+      { name: '数据调研完成', date: '2023-03-01', completed: true, tag: 'KO' },
+      { name: '数据仓库搭建', date: '2023-04-01', completed: false, tag: 'DL' },
+      { name: '分析模型开发', date: '2023-05-01', completed: false, tag: 'P' },
+      { name: '平台验收', date: '2023-05-15', completed: false, tag: 'CAV' }
     ],
     timeRecords: [
       { date: '2023-03-01', user: '李四', hours: 8, task: '数据模型设计' },
@@ -92,10 +92,10 @@ export const mockProjects = [
     costVariance: -10000,
     description: '开发面向最终用户的移动应用，支持iOS和Android平台，提供便捷的业务操作功能',
     milestones: [
-      { name: '原型设计完成', date: '2023-04-20', completed: false },
-      { name: 'iOS版本开发', date: '2023-05-30', completed: false },
-      { name: 'Android版本开发', date: '2023-06-10', completed: false },
-      { name: '应用发布', date: '2023-06-25', completed: false }
+      { name: '原型设计完成', date: '2023-04-20', completed: false, tag: 'KO' },
+      { name: 'iOS版本开发', date: '2023-05-30', completed: false, tag: 'FSB' },
+      { name: 'Android版本开发', date: '2023-06-10', completed: false, tag: 'DL' },
+      { name: '应用发布', date: '2023-06-25', completed: false, tag: 'CAV' }
     ],
     timeRecords: [
       { date: '2023-05-02', user: '王五', hours: 8, task: 'UI设计评审' },
@@ -127,9 +127,9 @@ export const mockProjects = [
     costVariance: 10000,
     description: '企业ERP系统升级，提升业务流程自动化水平',
     milestones: [
-      { name: '需求调研', date: '2023-03-28', completed: true },
-      { name: '系统开发', date: '2023-04-10', completed: false },
-      { name: '上线验收', date: '2023-04-15', completed: false }
+      { name: '需求调研', date: '2023-03-28', completed: true, tag: 'KO' },
+      { name: '系统开发', date: '2023-04-10', completed: false, tag: 'P' },
+      { name: '上线验收', date: '2023-04-15', completed: false, tag: 'CAV' }
     ],
     timeRecords: [
       { date: '2023-03-26', user: '赵六', hours: 8, task: '需求分析' },
@@ -158,9 +158,9 @@ export const mockProjects = [
     costVariance: -5000,
     description: '新产品市场推广活动，覆盖多渠道',
     milestones: [
-      { name: '活动策划', date: '2023-05-30', completed: false },
-      { name: '渠道对接', date: '2023-06-02', completed: false },
-      { name: '推广执行', date: '2023-06-05', completed: false }
+      { name: '活动策划', date: '2023-05-30', completed: false, tag: 'KO' },
+      { name: '渠道对接', date: '2023-06-02', completed: false, tag: 'DL' },
+      { name: '推广执行', date: '2023-06-05', completed: false, tag: 'FSB' }
     ],
     timeRecords: [
       { date: '2023-05-29', user: '李四', hours: 8, task: '活动策划' }

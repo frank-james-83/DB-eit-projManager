@@ -17,6 +17,11 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart } from 'echarts/charts'
 import { GridComponent, ToolboxComponent, TitleComponent } from 'echarts/components'
+// import * as echarts from 'echarts/core';
+// import { CanvasRenderer } from 'echarts/renderers';
+// import { LineChart, BarChart } from 'echarts/charts';
+// import { GridComponent, ToolboxComponent, TitleComponent } from 'echarts/components';
+
 
 // 配置 Echarts
 use([CanvasRenderer, LineChart, BarChart, GridComponent, ToolboxComponent, TitleComponent])
