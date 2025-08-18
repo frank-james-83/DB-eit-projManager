@@ -12,10 +12,7 @@
     // ... 其他配置
     "types": [
       //"vue",
-      "element-plus/global",
-      "vite/client"  // 必须添加这一行
+      "element-plus/global"  // 必须添加这一行
     ]
-  },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "exclude": ["node_modules"]
+  }
 }
