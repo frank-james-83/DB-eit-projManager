@@ -189,7 +189,7 @@
           <!-- 时间轴头部 -->
           <div class="gantt-timeline">
             <div v-for="(item, index) in timelineHeaders" :key="index" class="timeline-month"
-              style="text-align:center;">
+              :style="getTimelineItemStyle(item)">
               <div>{{ item.label1 }}</div>
               <div v-if="item.label2" style="font-size:12px;color:#888;">{{ item.label2 }}</div>
             </div>
@@ -208,7 +208,6 @@
                     <span class="task-label" v-if="idx === 0">{{ project.name }}</span>
                   </div>
                 </el-tooltip>
-
               </div>
             </template>
 
@@ -229,7 +228,6 @@
                 </el-tooltip>
               </div>
             </template>
-
           </div>
         </div>
       </section>
@@ -428,6 +426,8 @@ export default {
       return projects.value.find(p => p.id === activeProjectId.value) || null;
     });
 
+
+
     // 列显示控制配置
     const columns = ref({
       projectId: { visible: true },
@@ -500,21 +500,28 @@ export default {
     // 甘特图时间轴区间（动态）
     const timelineHeaders = computed(() => {
       if (timeRange.value === 'month') {
-        // 取当前 dateRange 范围内所有月份
-        const start = dateRange.value[0];
-        const end = dateRange.value[1];
+        // 月视图：每个单元格代表一个月
+        const start = new Date(dateRange.value[0]);
+        const end = new Date(dateRange.value[1]);
         const months = [];
         let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+
         while (cur <= end) {
+          // 计算该月在时间轴上的位置
+          const monthStart = new Date(cur.getFullYear(), cur.getMonth(), 1);
+          const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
+
           months.push({
             label1: `${cur.getFullYear()}-${(cur.getMonth() + 1).toString().padStart(2, '0')}`,
-            label2: ''
+            label2: '',
+            start: monthStart,
+            end: monthEnd
           });
           cur.setMonth(cur.getMonth() + 1);
         }
         return months;
       } else if (timeRange.value === 'week') {
-        // 取当前 dateRange 范围内所有周（周一为起始）
+        // 周视图：每个单元格代表一周
         const start = new Date(dateRange.value[0]);
         const end = new Date(dateRange.value[1]);
         let cur = new Date(start);
@@ -524,13 +531,16 @@ export default {
         let weekIdx = 1;
         while (cur <= end) {
           const weekStart = new Date(cur);
-          // label1: W+周数
-          // label2: MM/dd（周一）
+          const weekEnd = new Date(cur);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+
           const m1 = (weekStart.getMonth() + 1).toString().padStart(2, '0');
           const d1 = weekStart.getDate().toString().padStart(2, '0');
           weeks.push({
             label1: `W${weekIdx}`,
-            label2: `${m1}/${d1}`
+            label2: `${m1}/${d1}`,
+            start: weekStart,
+            end: weekEnd
           });
           cur.setDate(cur.getDate() + 7);
           weekIdx++;
@@ -551,7 +561,7 @@ export default {
       const barStart = Math.max(pStart.getTime(), start.getTime());
       const barEnd = Math.min(pEnd.getTime(), end.getTime());
       const left = ((barStart - start.getTime()) / total) * 100;
-      const width = ((barEnd - barStart) / total) * 100;
+      const width = Math.max(0.5, ((barEnd - barStart) / total) * 100); // 最小宽度0.5%
       return {
         left: left + '%',
         width: width + '%',
@@ -560,17 +570,29 @@ export default {
     }
 
     // 多段periods渲染支持
+    // 多段periods渲染支持
     function getGanttBarStyleByPeriod(period, project) {
-      const start = dateRange.value[0];
-      const end = dateRange.value[1];
-      const total = end.getTime() - start.getTime();
+      const viewStart = dateRange.value[0];
+      const viewEnd = dateRange.value[1];
+      const total = viewEnd.getTime() - viewStart.getTime();
+
       const pStart = new Date(period.start);
       const pEnd = new Date(period.end);
-      // 限制在区间内
-      const barStart = Math.max(pStart.getTime(), start.getTime());
-      const barEnd = Math.min(pEnd.getTime(), end.getTime());
-      const left = ((barStart - start.getTime()) / total) * 100;
-      const width = ((barEnd - barStart) / total) * 100;
+
+      // 如果 period 完全在视图范围之外，则不显示
+      if (pEnd < viewStart || pStart > viewEnd) {
+        return {
+          display: 'none'
+        };
+      }
+
+      // 限制在视图范围内
+      const barStart = Math.max(pStart.getTime(), viewStart.getTime());
+      const barEnd = Math.min(pEnd.getTime(), viewEnd.getTime());
+
+      const left = ((barStart - viewStart.getTime()) / total) * 100;
+      const width = Math.max(0.5, ((barEnd - barStart) / total) * 100); // 最小宽度0.5%
+
       return {
         left: left + '%',
         width: width + '%',
@@ -912,19 +934,30 @@ export default {
       confirmPeriodEdit
       , getMilestoneStyle
       , getMilestoneTooltip
+      , getTimelineItemStyle
+
     };
     // 计算milestone菱形在甘特条上的left百分比
     function getMilestoneStyle(milestone, project) {
-      const start = dateRange.value[0];
-      const end = dateRange.value[1];
-      const total = end.getTime() - start.getTime();
+      const viewStart = dateRange.value[0];
+      const viewEnd = dateRange.value[1];
       const msDate = new Date(milestone.date);
-      let left = ((msDate.getTime() - start.getTime()) / total) * 100;
+
+      // 如果里程碑日期在视图范围之外，则不显示
+      if (msDate < viewStart || msDate > viewEnd) {
+        return {
+          display: 'none'
+        };
+      }
+
+      const total = viewEnd.getTime() - viewStart.getTime();
+      let left = ((msDate.getTime() - viewStart.getTime()) / total) * 100;
       // 限制在0-100%区间
       left = Math.max(0, Math.min(left, 100));
+
       return {
         position: 'absolute',
-        top: '0', // 保证与gantt-row顶部对齐
+        top: '0',
         left: left + '%',
         zIndex: 3,
         width: '0',
@@ -932,6 +965,27 @@ export default {
         pointerEvents: 'auto',
       };
     }
+
+    function getTimelineItemStyle(item) {
+      const start = dateRange.value[0];
+      const end = dateRange.value[1];
+      const total = end.getTime() - start.getTime();
+
+      // 计算该项的开始位置
+      const itemStart = Math.max(item.start.getTime(), start.getTime());
+      const itemEnd = Math.min(item.end.getTime(), end.getTime());
+
+      const left = ((itemStart - start.getTime()) / total) * 100;
+      const width = ((itemEnd - itemStart) / total) * 100;
+
+      return {
+        position: 'absolute',
+        left: left + '%',
+        width: width + '%',
+        textAlign: 'center'
+      };
+    }
+
     // 里程碑tooltip内容
     function getMilestoneTooltip(milestone) {
       let tooltipText = `${milestone.name} (${formatDate(milestone.date)})\n状态: ${milestone.completed ? '已完成' : '进行中'}`;
@@ -1072,17 +1126,24 @@ export default {
 }
 
 .gantt-timeline {
-  display: flex;
+  position: relative;
+  height: 40px;
   margin-bottom: 10px;
   border-bottom: 2px solid #eaecef;
   padding-bottom: 5px;
 }
 
 .timeline-month {
-  flex: 1;
-  text-align: center;
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   font-weight: bold;
   color: #666;
+  border-right: 1px solid #eaecef;
 }
 
 .gantt-row {
