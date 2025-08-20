@@ -7,7 +7,6 @@
         </el-icon></el-button>
     </div>
 
-    <!-- <el-tabs v-if="project" type="card" class="detail-tabs" :value="activeTab" @input="handleTabChange"> -->
     <el-tabs v-if="project" type="card" class="detail-tabs" v-model="activeTab">
       <!-- 基本信息 -->
       <el-tab-pane label="基本信息" name="basic">
@@ -17,31 +16,68 @@
         </div>
         <el-descriptions :column="1" border v-if="!editMode.basic">
           <el-descriptions-item label="项目编号">{{ projectEdit.projectId }}</el-descriptions-item>
+          <el-descriptions-item label="EIT_WBS号">{{ projectEdit.eitWbs }}</el-descriptions-item>
           <el-descriptions-item label="项目名称">{{ projectEdit.name }}</el-descriptions-item>
           <el-descriptions-item label="项目经理">{{ projectEdit.manager }}</el-descriptions-item>
+          <el-descriptions-item label="现场经理">{{ projectEdit.siteManager }}</el-descriptions-item>
           <el-descriptions-item label="开始日期">{{ formatDate(projectEdit.startDate) }}</el-descriptions-item>
           <el-descriptions-item label="结束日期">{{ formatDate(projectEdit.endDate) }}</el-descriptions-item>
           <el-descriptions-item label="状态">{{ getStatusLabel(projectEdit.status) }}</el-descriptions-item>
           <el-descriptions-item label="项目描述">{{ projectEdit.description }}</el-descriptions-item>
+          <el-descriptions-item label="CEP No.">{{ projectEdit.cepNo }}</el-descriptions-item>
+          <el-descriptions-item label="客户简称">{{ projectEdit.customerShortName }}</el-descriptions-item>
+          <el-descriptions-item label="客户全称">{{ projectEdit.customerFullName }}</el-descriptions-item>
+          <el-descriptions-item label="客户英文名称">{{ projectEdit.customerEnglishName }}</el-descriptions-item>
+          <el-descriptions-item label="客户地址">{{ projectEdit.customerAddress }}</el-descriptions-item>
         </el-descriptions>
-        <el-form v-else :model="projectEdit" label-width="80px" label-position="left">
-          <el-form-item label="项目编号"><el-input :value="projectEdit.projectId" @input="val => updateProjectEdit('projectId', val)" /></el-form-item>
-          <el-form-item label="项目名称"><el-input :value="projectEdit.name" @input="val => updateProjectEdit('name', val)" /></el-form-item>
-          <el-form-item label="项目经理"><el-input :value="projectEdit.manager" @input="val => updateProjectEdit('manager', val)" /></el-form-item>
-          <el-form-item label="开始日期"><el-date-picker :value="projectEdit.startDate"
-              type="date" @input="val => updateProjectEdit('startDate', val)" /></el-form-item>
-          <el-form-item label="结束日期"><el-date-picker :value="projectEdit.endDate"
-              type="date" @input="val => updateProjectEdit('endDate', val)" /></el-form-item>
+        <el-form v-else :model="projectEdit" label-width="120px" label-position="left">
+          <el-form-item label="项目编号">
+            <el-input v-model="projectEdit.projectId" />
+          </el-form-item>
+          <el-form-item label="EIT_WBS号">
+            <el-input v-model="projectEdit.eitWbs" />
+          </el-form-item>
+          <el-form-item label="项目名称">
+            <el-input v-model="projectEdit.name" />
+          </el-form-item>
+          <el-form-item label="项目经理">
+            <el-input v-model="projectEdit.manager" />
+          </el-form-item>
+          <el-form-item label="现场经理">
+            <el-input v-model="projectEdit.siteManager" />
+          </el-form-item>
+          <el-form-item label="开始日期">
+            <el-date-picker v-model="projectEdit.startDate" type="date" />
+          </el-form-item>
+          <el-form-item label="结束日期">
+            <el-date-picker v-model="projectEdit.endDate" type="date" />
+          </el-form-item>
           <el-form-item label="状态">
-            <el-select :value="projectEdit.status" @change="val => updateProjectEdit('status', val)">
+            <el-select v-model="projectEdit.status">
               <el-option label="未开始" value="notStarted" />
               <el-option label="进行中" value="inProgress" />
               <el-option label="已完成" value="completed" />
               <el-option label="已延期" value="delayed" />
             </el-select>
           </el-form-item>
-          <el-form-item label="项目描述"><el-input :value="projectEdit.description"
-              type="textarea" @input="val => updateProjectEdit('description', val)" /></el-form-item>
+          <el-form-item label="项目描述">
+            <el-input v-model="projectEdit.description" type="textarea" />
+          </el-form-item>
+          <el-form-item label="CEP No.">
+            <el-input v-model="projectEdit.cepNo" />
+          </el-form-item>
+          <el-form-item label="客户简称">
+            <el-input v-model="projectEdit.customerShortName" />
+          </el-form-item>
+          <el-form-item label="客户全称">
+            <el-input v-model="projectEdit.customerFullName" />
+          </el-form-item>
+          <el-form-item label="客户英文名称">
+            <el-input v-model="projectEdit.customerEnglishName" />
+          </el-form-item>
+          <el-form-item label="客户地址">
+            <el-input v-model="projectEdit.customerAddress" />
+          </el-form-item>
         </el-form>
       </el-tab-pane>
       <!-- 财务数据 -->
@@ -60,10 +96,18 @@
           }}</el-descriptions-item>
         </el-descriptions>
         <el-form v-else :model="projectEdit" label-width="100px" label-position="left">
-          <el-form-item label="预算金额"><el-input :value="projectEdit.budget" @input="val => updateProjectEdit('budget', Number(val))" type="number" /></el-form-item>
-          <el-form-item label="已使用金额"><el-input :value="projectEdit.spent" @input="val => updateProjectEdit('spent', Number(val))" type="number" /></el-form-item>
-          <el-form-item label="预计总成本"><el-input :value="projectEdit.estimatedCost" @input="val => updateProjectEdit('estimatedCost', Number(val))" type="number" /></el-form-item>
-          <el-form-item label="成本偏差"><el-input :value="projectEdit.costVariance" @input="val => updateProjectEdit('costVariance', Number(val))" type="number" /></el-form-item>
+          <el-form-item label="预算金额">
+            <el-input v-model.number="projectEdit.budget" type="number" />
+          </el-form-item>
+          <el-form-item label="已使用金额">
+            <el-input v-model.number="projectEdit.spent" type="number" />
+          </el-form-item>
+          <el-form-item label="预计总成本">
+            <el-input v-model.number="projectEdit.estimatedCost" type="number" />
+          </el-form-item>
+          <el-form-item label="成本偏差">
+            <el-input v-model.number="projectEdit.costVariance" type="number" />
+          </el-form-item>
         </el-form>
         <v-chart :option="financialChartOption" autoresize class="mt-4" style="height: 300px;"
           v-show="true"></v-chart>
@@ -79,17 +123,17 @@
             <div class="stat-item">
               <div class="stat-label">总体进度</div>
               <div class="stat-value" v-if="!editMode.progress">{{ projectEdit.progress }}%</div>
-              <el-input v-else :value="projectEdit.progress" @input="val => updateProjectEdit('progress', Number(val))" style="width: 80px;" suffix="%" type="number" />
+              <el-input v-else v-model.number="projectEdit.progress" style="width: 80px;" suffix="%" type="number" />
             </div>
             <div class="stat-item">
               <div class="stat-label">计划工时</div>
               <div class="stat-value" v-if="!editMode.progress">{{ projectEdit.plannedHours }}h</div>
-              <el-input v-else :value="projectEdit.plannedHours" @input="val => updateProjectEdit('plannedHours', Number(val))" style="width: 80px;" suffix="h" type="number" />
+              <el-input v-else v-model.number="projectEdit.plannedHours" style="width: 80px;" suffix="h" type="number" />
             </div>
             <div class="stat-item">
               <div class="stat-label">已用工时</div>
               <div class="stat-value" v-if="!editMode.progress">{{ projectEdit.usedHours }}h</div>
-              <el-input v-else :value="projectEdit.usedHours" @input="val => updateProjectEdit('usedHours', Number(val))" style="width: 80px;" suffix="h" type="number" />
+              <el-input v-else v-model.number="projectEdit.usedHours" style="width: 80px;" suffix="h" type="number" />
             </div>
           </div>
           <el-progress :percentage="projectEdit.progress" :stroke-width="8"
@@ -108,17 +152,17 @@
         <el-table v-else :data="projectEdit.milestones" border size="small" style="margin-bottom: 10px;">
           <el-table-column prop="name" label="里程碑名称">
             <template #default="scope">
-              <el-input :value="scope.row.name" @input="val => updateMilestoneEdit(scope.$index, 'name', val)" />
+              <el-input v-model="projectEdit.milestones[scope.$index].name" />
             </template>
           </el-table-column>
           <el-table-column prop="date" label="日期">
             <template #default="scope">
-              <el-date-picker :value="scope.row.date" type="date" @input="val => updateMilestoneEdit(scope.$index, 'date', val)" />
+              <el-date-picker v-model="projectEdit.milestones[scope.$index].date" type="date" />
             </template>
           </el-table-column>
           <el-table-column prop="completed" label="状态">
             <template #default="scope">
-              <el-switch :value="scope.row.completed" @change="val => updateMilestoneEdit(scope.$index, 'completed', val)" active-text="已完成" inactive-text="进行中" />
+              <el-switch v-model="projectEdit.milestones[scope.$index].completed" active-text="已完成" inactive-text="进行中" />
             </template>
           </el-table-column>
         </el-table>
@@ -138,27 +182,129 @@
         <el-table v-else :data="projectEdit.timeRecords" border size="small">
           <el-table-column prop="date" label="日期">
             <template #default="scope">
-              <el-date-picker :value="scope.row.date" type="date" @input="val => updateTimeRecordEdit(scope.$index, 'date', val)" />
+              <el-date-picker v-model="projectEdit.timeRecords[scope.$index].date" type="date" />
             </template>
           </el-table-column>
           <el-table-column prop="user" label="人员">
             <template #default="scope">
-              <el-input :value="scope.row.user" @input="val => updateTimeRecordEdit(scope.$index, 'user', val)" />
+              <el-input v-model="projectEdit.timeRecords[scope.$index].user" />
             </template>
           </el-table-column>
           <el-table-column prop="hours" label="工时">
             <template #default="scope">
-              <el-input :value="scope.row.hours" @input="val => updateTimeRecordEdit(scope.$index, 'hours', Number(val))" type="number" />
+              <el-input v-model.number="projectEdit.timeRecords[scope.$index].hours" type="number" />
             </template>
           </el-table-column>
           <el-table-column prop="task" label="任务描述">
             <template #default="scope">
-              <el-input :value="scope.row.task" @input="val => updateTimeRecordEdit(scope.$index, 'task', val)" />
+              <el-input v-model="projectEdit.timeRecords[scope.$index].task" />
             </template>
           </el-table-column>
         </el-table>
         <v-chart :option="hoursChartOption" autoresize class="mt-4" style="height: 300px;"
           v-if="activeTab === 'hours'"></v-chart>
+      </el-tab-pane>
+      
+      <!-- EIT信息 -->
+      <el-tab-pane label="EIT信息" name="eit">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+          <el-button size="small" @click="toggleEdit('eit')">{{ editMode.eit ? '保存' : '编辑' }}</el-button>
+          <el-button v-if="editMode.eit" size="small" @click="cancelEdit('eit')">取消</el-button>
+        </div>
+        
+        <!-- EIT模块 -->
+        <h4>EIT模块</h4>
+        <el-table v-if="!editMode.eit" :data="projectEdit.eitModules" border size="small" style="margin-bottom: 20px;">
+          <el-table-column prop="name" label="模块名称"></el-table-column>
+          <el-table-column prop="value" label="数量/状态"></el-table-column>
+          <el-table-column prop="remark" label="备注"></el-table-column>
+        </el-table>
+        <div v-else>
+          <el-table :data="projectEdit.eitModules" border size="small" style="margin-bottom: 10px;">
+            <el-table-column label="模块名称" width="200">
+              <template #default="scope">
+                <el-select 
+                  v-model="scope.row.name" 
+                  filterable 
+                  allow-create 
+                  default-first-option
+                  placeholder="请选择或输入模块名称">
+                  <el-option label="基础模块" value="基础模块"></el-option>
+                  <el-option label="API模块" value="API模块"></el-option>
+                  <el-option label="EDS模块" value="EDS模块"></el-option>
+                  <el-option label="QC模块" value="QC模块"></el-option>
+                  <el-option label="ECO模块" value="ECO模块"></el-option>
+                  <el-option label="Review模块" value="Review模块"></el-option>
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="数量/状态">
+              <template #default="scope">
+                <el-input v-model="scope.row.value" placeholder="请输入数量或状态" />
+              </template>
+            </el-table-column>
+            <el-table-column label="备注" width="200">
+              <template #default="scope">
+                <el-input v-model="scope.row.remark" placeholder="请输入备注" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80">
+              <template #default="scope">
+                <el-button @click="removeEitModule(scope.$index)" type="danger" size="small">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="margin-bottom: 20px;">
+            <el-button @click="addEitModule" size="small">添加模块</el-button>
+          </div>
+        </div>
+        
+        <!-- 软硬件 -->
+        <h4>软硬件</h4>
+        <el-table v-if="!editMode.eit" :data="projectEdit.hardwareSoftware" border size="small">
+          <el-table-column prop="itemNumber" label="物料号"></el-table-column>
+          <el-table-column prop="name" label="名称"></el-table-column>
+          <el-table-column prop="category" label="类别"></el-table-column>
+          <el-table-column prop="quantity" label="数量"></el-table-column>
+          <el-table-column prop="description" label="描述"></el-table-column>
+        </el-table>
+        <div v-else>
+          <el-table :data="projectEdit.hardwareSoftware" border size="small">
+            <el-table-column label="物料号">
+              <template #default="scope">
+                <el-input v-model="scope.row.itemNumber" placeholder="请输入物料号" />
+              </template>
+            </el-table-column>
+            <el-table-column label="名称">
+              <template #default="scope">
+                <el-input v-model="scope.row.name" placeholder="请输入名称" />
+              </template>
+            </el-table-column>
+            <el-table-column label="类别">
+              <template #default="scope">
+                <el-input v-model="scope.row.category" placeholder="请输入类别" />
+              </template>
+            </el-table-column>
+            <el-table-column label="数量">
+              <template #default="scope">
+                <el-input v-model.number="scope.row.quantity" type="number" placeholder="请输入数量" />
+              </template>
+            </el-table-column>
+            <el-table-column label="描述">
+              <template #default="scope">
+                <el-input v-model="scope.row.description" placeholder="请输入描述" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80">
+              <template #default="scope">
+                <el-button @click="removeHardwareSoftware(scope.$index)" type="danger" size="small">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="margin-top: 10px;">
+            <el-button @click="addHardwareSoftware" size="small">添加软硬件</el-button>
+          </div>
+        </div>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -188,14 +334,24 @@ export default {
       basic: false,
       financial: false,
       progress: false,
-      hours: false
+      hours: false,
+      eit: false
     });
     
     const projectEdit = ref({});
 
     // 监听切换项目时同步编辑数据
     watch(() => props.project, (val) => {
-      if (val) projectEdit.value = JSON.parse(JSON.stringify(val));
+      if (val) {
+        projectEdit.value = JSON.parse(JSON.stringify(val));
+        // 确保EIT模块和软硬件数组存在
+        if (!projectEdit.value.eitModules) {
+          projectEdit.value.eitModules = [];
+        }
+        if (!projectEdit.value.hardwareSoftware) {
+          projectEdit.value.hardwareSoftware = [];
+        }
+      }
     }, { immediate: true });
 
     const financialChartOption = computed(() => {
@@ -330,11 +486,48 @@ export default {
       projectEdit.value.timeRecords[index][field] = value;
     };
 
+    // 添加EIT模块
+    const addEitModule = () => {
+      projectEdit.value.eitModules.push({
+        name: '',
+        value: '',
+        remark: ''
+      });
+    };
+
+    // 删除EIT模块
+    const removeEitModule = (index) => {
+      projectEdit.value.eitModules.splice(index, 1);
+    };
+
+    // 添加软硬件
+    const addHardwareSoftware = () => {
+      projectEdit.value.hardwareSoftware.push({
+        itemNumber: '',
+        name: '',
+        category: '',
+        quantity: 0,
+        description: ''
+      });
+    };
+
+    // 删除软硬件
+    const removeHardwareSoftware = (index) => {
+      projectEdit.value.hardwareSoftware.splice(index, 1);
+    };
+
     // 切换编辑/保存
     function toggleEdit(tab) {
       if (!editMode.value[tab]) {
         // 进入编辑模式，深拷贝当前数据
         projectEdit.value = JSON.parse(JSON.stringify(props.project));
+        // 确保EIT模块和软硬件数组存在
+        if (!projectEdit.value.eitModules) {
+          projectEdit.value.eitModules = [];
+        }
+        if (!projectEdit.value.hardwareSoftware) {
+          projectEdit.value.hardwareSoftware = [];
+        }
         editMode.value[tab] = true;
       } else {
         // 保存，发送更新事件
@@ -364,6 +557,10 @@ export default {
       updateProjectEdit,
       updateMilestoneEdit,
       updateTimeRecordEdit,
+      addEitModule,
+      removeEitModule,
+      addHardwareSoftware,
+      removeHardwareSoftware,
       toggleEdit,
       cancelEdit
     };
@@ -376,7 +573,7 @@ export default {
   position: absolute;
   top: 0;
   right: 0;
-  width: 450px;
+  width: 750px;
   height: 100%;
   background-color: white;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
@@ -397,14 +594,26 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .detail-tabs {
   flex: 1;
-  overflow: auto;
-  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+.detail-tabs :deep(.el-tabs__content) {
+  flex: 1;
+  overflow: hidden;
+}
+
+.detail-tabs :deep(.el-tab-pane) {
+  height: 100%;
+  overflow-y: auto;
+  padding: 15px;
+}
 .progress-overview {
   margin-bottom: 20px;
 }
