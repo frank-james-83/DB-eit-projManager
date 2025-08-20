@@ -80,38 +80,6 @@
           </el-form-item>
         </el-form>
       </el-tab-pane>
-      <!-- 财务数据 -->
-      <el-tab-pane label="财务数据" name="financial">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-          <el-button size="small" @click="toggleEdit('financial')">{{ editMode.financial ? '保存' : '编辑'
-          }}</el-button>
-          <el-button v-if="editMode.financial" size="small" @click="cancelEdit('financial')">取消</el-button>
-        </div>
-        <el-descriptions :column="2" border v-if="!editMode.financial">
-          <el-descriptions-item label="预算金额">{{ formatCurrency(projectEdit.budget) }}</el-descriptions-item>
-          <el-descriptions-item label="已使用金额">{{ formatCurrency(projectEdit.spent) }}</el-descriptions-item>
-          <el-descriptions-item label="预计总成本">{{ formatCurrency(projectEdit.estimatedCost)
-          }}</el-descriptions-item>
-          <el-descriptions-item label="成本偏差">{{ formatCurrency(projectEdit.costVariance)
-          }}</el-descriptions-item>
-        </el-descriptions>
-        <el-form v-else :model="projectEdit" label-width="100px" label-position="left">
-          <el-form-item label="预算金额">
-            <el-input v-model.number="projectEdit.budget" type="number" />
-          </el-form-item>
-          <el-form-item label="已使用金额">
-            <el-input v-model.number="projectEdit.spent" type="number" />
-          </el-form-item>
-          <el-form-item label="预计总成本">
-            <el-input v-model.number="projectEdit.estimatedCost" type="number" />
-          </el-form-item>
-          <el-form-item label="成本偏差">
-            <el-input v-model.number="projectEdit.costVariance" type="number" />
-          </el-form-item>
-        </el-form>
-        <v-chart :option="financialChartOption" autoresize class="mt-4" style="height: 300px;"
-          v-show="true"></v-chart>
-      </el-tab-pane>
       <!-- 进度跟踪 -->
       <el-tab-pane label="进度跟踪" name="progress">
         <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
@@ -173,36 +141,59 @@
           <el-button size="small" @click="toggleEdit('hours')">{{ editMode.hours ? '保存' : '编辑' }}</el-button>
           <el-button v-if="editMode.hours" size="small" @click="cancelEdit('hours')">取消</el-button>
         </div>
-        <el-table v-if="!editMode.hours" :data="projectEdit.timeRecords" border size="small">
-          <el-table-column prop="date" label="日期"></el-table-column>
+        <el-table v-if="!editMode.hours" :data="projectEdit.periods" border size="small">
+          <el-table-column prop="start" label="开始时间">
+            <template #default="scope">
+              {{ formatDate(scope.row.start) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="end" label="结束时间">
+            <template #default="scope">
+              {{ formatDate(scope.row.end) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="工时">
+            <template #default="scope">
+              <div>实际: {{ calculateActualHours(scope.row) }}h</div>
+              <div>计划: {{ calculatePlannedHours(scope.row) }}h</div>
+            </template>
+          </el-table-column>
           <el-table-column prop="user" label="人员"></el-table-column>
-          <el-table-column prop="hours" label="工时"></el-table-column>
-          <el-table-column prop="task" label="任务描述"></el-table-column>
+          <el-table-column prop="comment" label="备注"></el-table-column>
         </el-table>
-        <el-table v-else :data="projectEdit.timeRecords" border size="small">
-          <el-table-column prop="date" label="日期">
+        <el-table v-else :data="projectEdit.periods" border size="small">
+          <el-table-column label="开始时间">
             <template #default="scope">
-              <el-date-picker v-model="projectEdit.timeRecords[scope.$index].date" type="date" />
+              <el-date-picker v-model="projectEdit.periods[scope.$index].start" type="date" />
             </template>
           </el-table-column>
-          <el-table-column prop="user" label="人员">
+          <el-table-column label="结束时间">
             <template #default="scope">
-              <el-input v-model="projectEdit.timeRecords[scope.$index].user" />
+              <el-date-picker v-model="projectEdit.periods[scope.$index].end" type="date" />
             </template>
           </el-table-column>
-          <el-table-column prop="hours" label="工时">
+          <el-table-column label="工时">
             <template #default="scope">
-              <el-input v-model.number="projectEdit.timeRecords[scope.$index].hours" type="number" />
+              <el-input v-model.number="projectEdit.periods[scope.$index].hours" type="number" />
             </template>
           </el-table-column>
-          <el-table-column prop="task" label="任务描述">
+          <el-table-column label="人员">
             <template #default="scope">
-              <el-input v-model="projectEdit.timeRecords[scope.$index].task" />
+              <el-input v-model="projectEdit.periods[scope.$index].user" />
+            </template>
+          </el-table-column>
+          <el-table-column label="备注">
+            <template #default="scope">
+              <el-input v-model="projectEdit.periods[scope.$index].comment" />
             </template>
           </el-table-column>
         </el-table>
-        <v-chart :option="hoursChartOption" autoresize class="mt-4" style="height: 300px;"
-          v-if="activeTab === 'hours'"></v-chart>
+        <v-chart 
+          v-if="activeTab === 'hours'" 
+          :option="hoursChartOption" 
+          autoresize 
+          class="mt-4" 
+          style="height: 300px;"></v-chart>
       </el-tab-pane>
       
       <!-- EIT信息 -->
@@ -312,9 +303,25 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
+import VChart from 'vue-echarts'
+import { use } from "echarts/core"
+import { CanvasRenderer } from "echarts/renderers"
+import { LineChart } from "echarts/charts"
+import { TooltipComponent, LegendComponent, GridComponent } from "echarts/components"
+
+use([
+  CanvasRenderer,
+  LineChart,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+])
 
 export default {
   name: 'ProjectDetail',
+  components: {
+    VChart
+  },
   props: {
     project: {
       type: Object,
@@ -332,7 +339,7 @@ export default {
     // 编辑模式相关
     const editMode = ref({
       basic: false,
-      financial: false,
+      
       progress: false,
       hours: false,
       eit: false
@@ -354,18 +361,61 @@ export default {
       }
     }, { immediate: true });
 
-    const financialChartOption = computed(() => {
-      if (!props.project) return {}
+
+    // 工时图表配置
+    const hoursChartOption = computed(() => {
+      if (!props.project || !props.project.periods) return {}
+
+      // 按日期排序periods
+      const sortedPeriods = [...props.project.periods].sort((a, b) => 
+        new Date(a.start) - new Date(b.start)
+      );
+      
+      // 构建累计工时数据
+      const cumulativeData = [];
+      const dates = [];
+      
+      // 收集所有日期
+      const allDates = new Set();
+      sortedPeriods.forEach(period => {
+        allDates.add(formatDate(period.start));
+        allDates.add(formatDate(period.end));
+      });
+      
+      const sortedDates = Array.from(allDates).sort();
+      
+      // 计算每天的累计工时
+      sortedDates.forEach(date => {
+        dates.push(date);
+        const currentDate = new Date(date);
+        
+        // 计算到当前日期的累计工时
+        let cumulativeHours = 0;
+        sortedPeriods.forEach(period => {
+          const periodStart = new Date(period.start);
+          const periodEnd = new Date(period.end);
+          if (periodStart <= currentDate) {
+            cumulativeHours += period.hours || 0;
+          }
+        });
+        cumulativeData.push(cumulativeHours);
+      });
+
+      // 获取目标工时值
+      const targetHours = props.project.plannedHours || 0;
+      
+      // 构建目标线数据
+      const targetLine = new Array(dates.length).fill(targetHours);
 
       return {
         title: {
-          text: '财务数据趋势'
+          text: '项目工时进度'
         },
         tooltip: {
           trigger: 'axis'
         },
         legend: {
-          data: ['预算', '实际']
+          data: ['实际工时', '目标工时']
         },
         grid: {
           left: '3%',
@@ -376,51 +426,7 @@ export default {
         xAxis: {
           type: 'category',
           boundaryGap: false,
-          data: ['1月', '2月', '3月', '4月', '5月']
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            name: '预算',
-            type: 'line',
-            data: [50000, 60000, 70000, 65000, 75000]
-          },
-          {
-            name: '实际',
-            type: 'line',
-            data: [45000, 58000, 65000, 62000, 70000]
-          }
-        ]
-      }
-    })
-
-    // 工时图表配置
-    const hoursChartOption = computed(() => {
-      if (!props.project || !props.project.timeRecords) return {}
-
-      // 统计每个人的工时总和
-      const userHoursMap = {};
-      props.project.timeRecords.forEach(record => {
-        if (!userHoursMap[record.user]) {
-          userHoursMap[record.user] = 0;
-        }
-        userHoursMap[record.user] += record.hours;
-      });
-      const users = Object.keys(userHoursMap);
-      const hours = users.map(user => userHoursMap[user]);
-
-      return {
-        title: {
-          text: '人员工时统计'
-        },
-        tooltip: {
-          trigger: 'axis'
-        },
-        xAxis: {
-          type: 'category',
-          data: users
+          data: dates
         },
         yAxis: {
           type: 'value',
@@ -428,10 +434,24 @@ export default {
         },
         series: [
           {
-            data: hours,
-            type: 'bar',
+            name: '实际工时',
+            type: 'line',
+            data: cumulativeData,
             itemStyle: {
               color: '#1e88e5'
+            },
+            smooth: true
+          },
+          {
+            name: '目标工时',
+            type: 'line',
+            data: targetLine,
+            itemStyle: {
+              color: '#42b983'
+            },
+            smooth: true,
+            lineStyle: {
+              type: 'dashed'
             }
           }
         ]
@@ -463,12 +483,61 @@ export default {
     };
 
     const formatDate = (dateString) => {
+      if (!dateString) return '';
       const date = new Date(dateString);
       return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     };
 
     const formatCurrency = (value) => {
       return `¥${value.toLocaleString()}`;
+    };
+
+    // 计算实际工时（当前日期之前的工时）
+    const calculateActualHours = (period) => {
+      const periodEnd = new Date(period.end);
+      const now = new Date();
+      
+      // 如果结束日期在当前日期之前，则全部为实际工时
+      if (periodEnd < now) {
+        return period.hours || 0;
+      }
+      
+      // 如果结束日期在当前日期之后，则按比例计算
+      const periodStart = new Date(period.start);
+      const totalTime = periodEnd.getTime() - periodStart.getTime();
+      
+      // 如果任务还没开始，实际工时为0
+      if (periodStart > now) {
+        return 0;
+      }
+      
+      // 计算到当前时间已完成的部分
+      const elapsed = now.getTime() - periodStart.getTime();
+      const ratio = Math.min(1, Math.max(0, elapsed / totalTime));
+      return Math.round((period.hours || 0) * ratio);
+    };
+    
+    // 计算计划工时（当前日期之后的工时）
+    const calculatePlannedHours = (period) => {
+      const periodEnd = new Date(period.end);
+      const now = new Date();
+      
+      // 如果结束日期在当前日期之前，则计划工时为0
+      if (periodEnd < now) {
+        return 0;
+      }
+      
+      // 如果开始日期在当前日期之后，则全部为计划工时
+      const periodStart = new Date(period.start);
+      if (periodStart > now) {
+        return period.hours || 0;
+      }
+      
+      // 计算剩余部分
+      const totalTime = periodEnd.getTime() - periodStart.getTime();
+      const remaining = periodEnd.getTime() - now.getTime();
+      const ratio = Math.min(1, Math.max(0, remaining / totalTime));
+      return Math.round((period.hours || 0) * ratio);
     };
 
     // 更新编辑中的项目属性
@@ -546,13 +615,14 @@ export default {
       activeTab,
       editMode,
       projectEdit,
-      financialChartOption,
       hoursChartOption,
       closePanel,
       handleTabChange,
       getProgressColor,
       getStatusLabel,
       formatDate,
+      calculateActualHours,
+      calculatePlannedHours,
       formatCurrency,
       updateProjectEdit,
       updateMilestoneEdit,
