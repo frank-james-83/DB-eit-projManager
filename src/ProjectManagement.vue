@@ -263,6 +263,10 @@ export default {
     const handleProjectNameClick = (project) => {
       activeProjectId.value = project.id;
       isDetailOpen.value = true;
+      // 延迟一小段时间再显示图表，确保DOM已经渲染完成
+      setTimeout(() => {
+        // 触发一次更新以确保图表正确渲染
+      }, 100);
     };
 
     const closeDetailPanel = () => {

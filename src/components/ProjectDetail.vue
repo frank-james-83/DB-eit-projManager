@@ -41,10 +41,24 @@
             <el-input v-model="projectEdit.name" />
           </el-form-item>
           <el-form-item label="项目经理">
-            <el-input v-model="projectEdit.manager" />
+            <el-select v-model="projectEdit.manager" placeholder="请选择项目经理">
+              <el-option
+                v-for="manager in projectManagers"
+                :key="manager.id"
+                :label="manager.name"
+                :value="manager.name">
+              </el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="现场经理">
-            <el-input v-model="projectEdit.siteManager" />
+            <el-select v-model="projectEdit.siteManager" placeholder="请选择现场经理">
+              <el-option
+                v-for="manager in siteManagers"
+                :key="manager.id"
+                :label="manager.name"
+                :value="manager.name">
+              </el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="开始日期">
             <el-date-picker v-model="projectEdit.startDate" type="date" />
@@ -142,12 +156,14 @@
           <el-button v-if="editMode.hours" size="small" @click="addPeriod">增加区间</el-button>
           <el-button v-if="editMode.hours" size="small" @click="cancelEdit('hours')">取消</el-button>
         </div>
-        <v-chart 
-          v-if="activeTab === 'hours'" 
-          :option="hoursChartOption" 
-          autoresize 
-          class="mt-4" 
-          style="height: 300px; margin-bottom: 20px;"></v-chart>
+        <div v-if="activeTab === 'hours' && !editMode.hours && showChart" style="height: 300px; margin-bottom: 20px;">
+          <v-chart 
+            :option="hoursChartOption" 
+            autoresize 
+            class="mt-4" 
+            style="height: 100%;"
+            @ready="onChartReady"></v-chart>
+        </div>
         <el-table v-if="!editMode.hours" :data="projectEdit.periods" border size="small">
           <el-table-column prop="start" label="开始时间">
             <template #default="scope">
@@ -165,7 +181,7 @@
               <div>计划: {{ calculatePlannedHours(scope.row) }}h</div>
             </template>
           </el-table-column>
-          <el-table-column prop="user" label="人员"></el-table-column>
+          <el-table-column prop="user" label="EIT工程师"></el-table-column>
           <el-table-column prop="comment" label="备注"></el-table-column>
         </el-table>
         <el-table v-else :data="projectEdit.periods" border size="small">
@@ -184,9 +200,21 @@
               <el-input v-model.number="projectEdit.periods[scope.$index].hours" type="number" />
             </template>
           </el-table-column>
-          <el-table-column label="人员">
+          <el-table-column label="EIT工程师">
             <template #default="scope">
-              <el-input v-model="projectEdit.periods[scope.$index].user" />
+              <el-select 
+                v-model="projectEdit.periods[scope.$index].user" 
+                filterable 
+                allow-create 
+                default-first-option
+                placeholder="请选择或输入EIT工程师">
+                <el-option
+                  v-for="engineer in eitEngineersList"
+                  :key="engineer.id"
+                  :label="engineer.name"
+                  :value="engineer.name">
+                </el-option>
+              </el-select>
             </template>
           </el-table-column>
           <el-table-column label="备注">
@@ -262,34 +290,40 @@
           <el-table-column prop="itemNumber" label="物料号"></el-table-column>
           <el-table-column prop="name" label="名称"></el-table-column>
           <el-table-column prop="category" label="类别"></el-table-column>
+          <el-table-column prop="unit" label="单位"></el-table-column>
           <el-table-column prop="quantity" label="数量"></el-table-column>
-          <el-table-column prop="description" label="描述"></el-table-column>
+          <el-table-column prop="description" label="规格"></el-table-column>
         </el-table>
         <div v-else>
           <el-table :data="projectEdit.hardwareSoftware" border size="small">
-            <el-table-column label="物料号">
+            <el-table-column label="物料">
               <template #default="scope">
-                <el-input v-model="scope.row.itemNumber" placeholder="请输入物料号" />
+                <el-select 
+                  v-model="scope.row.materialId" 
+                  filterable 
+                  placeholder="请选择物料"
+                  @change="handleMaterialSelect(scope.row, $event)">
+                  <el-option
+                    v-for="material in materialsList"
+                    :key="material.id"
+                    :label="`${material.name} (${material.spec})`"
+                    :value="material.id">
+                  </el-option>
+                </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="名称">
-              <template #default="scope">
-                <el-input v-model="scope.row.name" placeholder="请输入名称" />
-              </template>
-            </el-table-column>
-            <el-table-column label="类别">
-              <template #default="scope">
-                <el-input v-model="scope.row.category" placeholder="请输入类别" />
-              </template>
-            </el-table-column>
+            <el-table-column label="物料号" prop="itemNumber"></el-table-column>
+            <el-table-column label="名称" prop="name"></el-table-column>
+            <el-table-column label="类别" prop="category"></el-table-column>
+            <el-table-column label="单位" prop="unit"></el-table-column>
             <el-table-column label="数量">
               <template #default="scope">
                 <el-input v-model.number="scope.row.quantity" type="number" placeholder="请输入数量" />
               </template>
             </el-table-column>
-            <el-table-column label="描述">
+            <el-table-column label="规格">
               <template #default="scope">
-                <el-input v-model="scope.row.description" placeholder="请输入描述" />
+                <el-input v-model="scope.row.description" placeholder="请输入规格" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="80">
@@ -308,12 +342,22 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
 import VChart from 'vue-echarts'
 import { use } from "echarts/core"
 import { CanvasRenderer } from "echarts/renderers"
 import { LineChart } from "echarts/charts"
 import { TooltipComponent, LegendComponent, GridComponent } from "echarts/components"
+import {  projectManagers, siteManagers, eitEngineers, materials, materialCategories } from '../api/mockData.ts';
+import { mockProjects } from '../api/mockProjects';
+import { 
+  projectManagers as pmList, 
+  siteManagers as smList, 
+  eitEngineers as eitList, 
+  materials as matList, 
+  materialCategories as matCatList 
+} from '../api/mockData';
 
 use([
   CanvasRenderer,
@@ -341,15 +385,93 @@ export default {
   emits: ['close', 'update-project'],
   setup(props, { emit }) {
     const activeTab = ref('basic');
-    
-    // 编辑模式相关
-    const editMode = ref({
+    const editMode = reactive({
       basic: false,
-      
       progress: false,
+      cost: false,
+      materials: false,
       hours: false,
       eit: false
     });
+
+    // 图表渲染控制
+    const showChart = ref(false);
+    const isComponentMounted = ref(false);
+    let chartInstance = null;
+    let isFirstChartRender = true;
+    
+    // 组件挂载后标记
+    onMounted(() => {
+      isComponentMounted.value = true;
+    });
+    
+    // 监听visible属性变化，控制图表显示
+    watch(() => props.visible, (newVal) => {
+      if (newVal) {
+        // 延迟显示图表，确保DOM已经渲染完成
+        nextTick(() => {
+          setTimeout(() => {
+            // 只有当在工时统计标签页且不在编辑模式下才显示图表
+            if (activeTab.value === 'hours' && !editMode.hours) {
+              showChart.value = true;
+            }
+            // 触发图表resize确保正确渲染
+            if (chartInstance) {
+              nextTick(() => {
+                setTimeout(() => {
+                  chartInstance.resize();
+                }, 50);
+              });
+            }
+          }, 100);
+        });
+      } else {
+        showChart.value = false;
+        isFirstChartRender = true;
+      }
+    }, { flush: 'post' });
+
+    // 监听activeTab变化，如果切换到工时统计标签页，确保图表显示
+    watch([activeTab, () => props.visible], ([newTab, newVisible]) => {
+      if (newTab === 'hours' && newVisible && !editMode.hours) {
+        nextTick(() => {
+          setTimeout(() => {
+            showChart.value = true;
+            // 触发图表resize确保正确渲染
+            if (chartInstance) {
+              nextTick(() => {
+                setTimeout(() => {
+                  chartInstance.resize();
+                }, 50);
+              });
+            }
+          }, 100);
+        });
+      } else {
+        showChart.value = false;
+      }
+    }, { flush: 'post' });
+    
+    // 图表就绪回调
+    const onChartReady = (chart) => {
+      chartInstance = chart;
+      // 确保图表正确初始化
+      if (isFirstChartRender) {
+        nextTick(() => {
+          setTimeout(() => {
+            chart.resize();
+          }, 100);
+        });
+        isFirstChartRender = false;
+      }
+    };
+    
+    // 下拉选项数据
+    const projectManagersList = projectManagers.concat(pmList);
+    const siteManagersList = siteManagers.concat(smList);
+    const eitEngineersList = eitEngineers.concat(eitList);
+    const materialsList = materials.concat(matList);
+    const materialCategoriesList = materialCategories.concat(matCatList);
     
     const projectEdit = ref({});
 
@@ -597,11 +719,13 @@ export default {
     // 添加软硬件
     const addHardwareSoftware = () => {
       projectEdit.value.hardwareSoftware.push({
+        materialId: '', // 新增物料ID字段
         itemNumber: '',
         name: '',
         category: '',
+        unit: '', // 添加单位字段
         quantity: 0,
-        description: ''
+        description: '' // 规格描述
       });
     };
 
@@ -610,9 +734,24 @@ export default {
       projectEdit.value.hardwareSoftware.splice(index, 1);
     };
 
+    // 处理物料选择
+    const handleMaterialSelect = (row, materialId) => {
+      // 查找选中的物料
+      const selectedMaterial = materialsList.find(material => material.id === materialId);
+      
+      // 如果找到匹配的物料，填充其他字段
+      if (selectedMaterial) {
+        row.itemNumber = selectedMaterial.id;
+        row.name = selectedMaterial.name;
+        row.unit = selectedMaterial.unit;  // 添加单位字段
+        row.category = materialCategoriesList.find(c => c.id === selectedMaterial.categoryId)?.name || '';
+        row.description = selectedMaterial.spec;  // 将描述字段改为spec
+      }
+    };
+
     // 切换编辑/保存
     function toggleEdit(tab) {
-      if (!editMode.value[tab]) {
+      if (!editMode[tab]) {
         // 进入编辑模式，深拷贝当前数据
         projectEdit.value = JSON.parse(JSON.stringify(props.project));
         // 确保EIT模块和软硬件数组存在
@@ -622,17 +761,17 @@ export default {
         if (!projectEdit.value.hardwareSoftware) {
           projectEdit.value.hardwareSoftware = [];
         }
-        editMode.value[tab] = true;
+        editMode[tab] = true;
       } else {
         // 保存，发送更新事件
         emit('update-project', projectEdit.value);
-        editMode.value[tab] = false;
+        editMode[tab] = false;
       }
     }
     
     // 取消编辑
     function cancelEdit(tab) {
-      editMode.value[tab] = false;
+      editMode[tab] = false;
       projectEdit.value = JSON.parse(JSON.stringify(props.project));
     }
 
@@ -640,26 +779,33 @@ export default {
       activeTab,
       editMode,
       projectEdit,
-      hoursChartOption,
-      closePanel,
-      handleTabChange,
-      getProgressColor,
-      getStatusLabel,
       formatDate,
+      getStatusLabel,
+      getProgressColor,
       calculateActualHours,
       calculatePlannedHours,
-      formatCurrency,
-      updateProjectEdit,
-      updateMilestoneEdit,
-      updateTimeRecordEdit,
+      toggleEdit,
+      cancelEdit,
+      closePanel,
       addPeriod,
       removePeriod,
       addEitModule,
       removeEitModule,
       addHardwareSoftware,
       removeHardwareSoftware,
-      toggleEdit,
-      cancelEdit
+      handleMaterialSelect,
+      // 下拉选项数据
+      projectManagers: projectManagersList,
+      siteManagers: siteManagersList,
+      eitEngineers: eitEngineersList,
+      eitEngineersList,
+      materials: materialsList,
+      materialCategories: materialCategoriesList,
+      materialsList,
+      materialCategoriesList,
+      hoursChartOption,
+      showChart,
+      onChartReady
     };
   }
 };
