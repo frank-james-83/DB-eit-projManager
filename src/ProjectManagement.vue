@@ -52,7 +52,7 @@
         :date-range="dateRange"
         :active-project-id="activeProjectId"
         @update:timeRange="timeRange = $event"
-        @update:dateRange="dateRange = $event"
+        @update:dateRange="handleDateRangeChange"
         @prev-time-range="prevTimeRange"
         @next-time-range="nextTimeRange"
         @time-range-change="handleTimeRangeChange"
@@ -123,6 +123,20 @@ import { fetchProjects, addProject, updateProject, deleteProject } from './api/p
 import ProjectList from './components/ProjectList.vue';
 import GanttChart from './components/GanttChart.vue';
 import ProjectDetail from './components/ProjectDetail.vue';
+import { 
+  getCookie, 
+  setCookie,
+  saveProjectListColumnSettings,
+  getProjectListColumnSettings,
+  saveProjectListSorting,
+  getProjectListSorting,
+  saveProjectListFilters,
+  getProjectListFilters,
+  saveGanttChartViewMode,
+  getGanttChartViewMode,
+  saveGanttChartDateRange,
+  getGanttChartDateRange
+} from './utils/cookies';
 
 export default {
   name: 'ProjectManagement',
@@ -135,10 +149,7 @@ export default {
     // 状态管理
     const searchQuery = ref('');
     const timeRange = ref('month');
-    const dateRange = ref([
-      new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-      new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
-    ]);
+    const dateRange = ref([new Date('2023-01-01'), new Date('2023-12-31')]);
     const isDetailOpen = ref(false);
     const activeProjectId = ref(null);
     const activeProject = computed(() => {
@@ -150,6 +161,7 @@ export default {
       projectId: { visible: true },
       name: { visible: true },
       manager: { visible: true },
+      budgetHours: { visible: true },
       plannedHours: { visible: true },
       usedHours: { visible: true },
       progress: { visible: true }
@@ -160,12 +172,20 @@ export default {
 
     // 示例：页面加载时获取项目列表
     onMounted(async () => {
+      // 从cookie中恢复设置
+      loadSettingsFromCookies();
+      
       projects.value = await fetchProjects();
     });
 
     // 排序和过滤状态
     const sortState = ref({ prop: '', order: '' });
     const filterState = ref({});
+
+    // 监听设置变化并保存到cookie
+    watch([columns, sortState, filterState, timeRange, dateRange], () => {
+      saveSettingsToCookies();
+    }, { deep: true });
 
     // 过滤+排序后的项目列表
     const filteredProjects = computed(() => {
@@ -298,6 +318,12 @@ export default {
         dateRange.value = [start, end];
       }
     }
+    
+    function handleDateRangeChange(range) {
+      if (range && range.length === 2) {
+        dateRange.value = range;
+      }
+    }
 
     const handleTimeRangeChange = (range) => {
       timeRange.value = range;
@@ -308,6 +334,86 @@ export default {
       const idx = projects.value.findIndex(p => p.id === projectData.id);
       if (idx !== -1) {
         projects.value[idx] = JSON.parse(JSON.stringify(projectData));
+      }
+    };
+
+    // 从cookie加载设置
+    const loadSettingsFromCookies = () => {
+      try {
+        // 加载列设置
+        const savedColumns = getProjectListColumnSettings();
+        if (savedColumns) {
+          Object.keys(savedColumns).forEach(key => {
+            if (columns.value[key] !== undefined) {
+              columns.value[key].visible = savedColumns[key].visible;
+            }
+          });
+        }
+
+        // 加载排序设置
+        const savedSort = getProjectListSorting();
+        if (savedSort) {
+          sortState.value = savedSort;
+        }
+
+        // 加载过滤设置
+        const savedFilters = getProjectListFilters();
+        if (savedFilters) {
+          filterState.value = savedFilters;
+        }
+
+        // 加载搜索查询
+        const savedSearchQuery = getCookie('projectListSearchQuery');
+        if (savedSearchQuery) {
+          searchQuery.value = savedSearchQuery;
+        }
+
+        // 加载甘特图时间范围设置
+        const savedTimeRange = getGanttChartViewMode();
+        if (savedTimeRange) {
+          timeRange.value = savedTimeRange;
+        }
+
+        // 加载甘特图日期范围设置
+        const savedDateRange = getGanttChartDateRange();
+        if (savedDateRange) {
+          if (Array.isArray(savedDateRange) && savedDateRange.length === 2) {
+            dateRange.value = [
+              new Date(savedDateRange[0]),
+              new Date(savedDateRange[1])
+            ];
+          }
+        }
+      } catch (e) {
+        console.error('加载设置时出错:', e);
+      }
+    };
+
+    // 保存设置到cookie
+    const saveSettingsToCookies = () => {
+      try {
+        // 保存列设置
+        saveProjectListColumnSettings(columns.value);
+
+        // 保存排序设置
+        saveProjectListSorting(sortState.value);
+
+        // 保存过滤设置
+        saveProjectListFilters(filterState.value);
+
+        // 保存搜索查询
+        setCookie('projectListSearchQuery', searchQuery.value);
+
+        // 保存甘特图时间范围设置
+        saveGanttChartViewMode(timeRange.value);
+
+        // 保存甘特图日期范围设置
+        saveGanttChartDateRange([
+          dateRange.value[0].getTime(),
+          dateRange.value[1].getTime()
+        ]);
+      } catch (e) {
+        console.error('保存设置时出错:', e);
       }
     };
 
@@ -331,6 +437,7 @@ export default {
       prevTimeRange,
       nextTimeRange,
       handleTimeRangeChange,
+      handleDateRangeChange,
       openPeriodEditDialog,
       closePeriodEditDialog,
       addPeriod,

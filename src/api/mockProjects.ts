@@ -13,6 +13,7 @@ export const mockProjects = [
   { start: '2023-03-01', end: '2023-03-10', hours: 100, user: '王五', comment: '开发与测试' }
     ],
     color: '#42b983',
+    budgetHours: 2400,
     plannedHours: 2400,
     usedHours: 1800,
     progress: 75,
@@ -48,6 +49,7 @@ export const mockProjects = [
   { start: '2023-05-01', end: '2023-05-15', hours: 110, user: '赵六', comment: '平台开发' }
     ],
     color: '#f39c12',
+    budgetHours: 3600,
     plannedHours: 3600,
     usedHours: 1500,
     progress: 40,
@@ -82,6 +84,7 @@ export const mockProjects = [
   { start: '2023-06-01', end: '2023-06-25', hours: 70, user: '张三', comment: 'Android开发' }
     ],
     color: '#e74c3c',
+    budgetHours: 1200,
     plannedHours: 1800,
     usedHours: 450,
     progress: 25,
@@ -117,6 +120,7 @@ export const mockProjects = [
   { start: '2023-04-05', end: '2023-04-15', hours: 60, user: '张三', comment: '系统升级实施' }
     ],
     color: '#8e44ad',
+    budgetHours: 1200,
     plannedHours: 1200,
     usedHours: 600,
     progress: 50,
@@ -148,6 +152,7 @@ export const mockProjects = [
   { start: '2023-06-03', end: '2023-06-05', hours: 15, user: '王五', comment: '执行与总结' }
     ],
     color: '#16a085',
+    budgetHours: 600,
     plannedHours: 600,
     usedHours: 200,
     progress: 20,

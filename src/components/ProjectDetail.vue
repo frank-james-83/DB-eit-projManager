@@ -139,8 +139,15 @@
       <el-tab-pane label="工时统计" name="hours">
         <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
           <el-button size="small" @click="toggleEdit('hours')">{{ editMode.hours ? '保存' : '编辑' }}</el-button>
+          <el-button v-if="editMode.hours" size="small" @click="addPeriod">增加区间</el-button>
           <el-button v-if="editMode.hours" size="small" @click="cancelEdit('hours')">取消</el-button>
         </div>
+        <v-chart 
+          v-if="activeTab === 'hours'" 
+          :option="hoursChartOption" 
+          autoresize 
+          class="mt-4" 
+          style="height: 300px; margin-bottom: 20px;"></v-chart>
         <el-table v-if="!editMode.hours" :data="projectEdit.periods" border size="small">
           <el-table-column prop="start" label="开始时间">
             <template #default="scope">
@@ -187,13 +194,12 @@
               <el-input v-model="projectEdit.periods[scope.$index].comment" />
             </template>
           </el-table-column>
+          <el-table-column label="操作" width="80">
+            <template #default="scope">
+              <el-button @click="removePeriod(scope.$index)" type="danger" size="small">删除</el-button>
+            </template>
+          </el-table-column>
         </el-table>
-        <v-chart 
-          v-if="activeTab === 'hours'" 
-          :option="hoursChartOption" 
-          autoresize 
-          class="mt-4" 
-          style="height: 300px;"></v-chart>
       </el-tab-pane>
       
       <!-- EIT信息 -->
@@ -555,6 +561,25 @@ export default {
       projectEdit.value.timeRecords[index][field] = value;
     };
 
+    // 添加工时区间
+    const addPeriod = () => {
+      if (!projectEdit.value.periods) {
+        projectEdit.value.periods = [];
+      }
+      projectEdit.value.periods.push({
+        start: '',
+        end: '',
+        hours: 0,
+        user: '',
+        comment: ''
+      });
+    };
+
+    // 删除工时区间
+    const removePeriod = (index) => {
+      projectEdit.value.periods.splice(index, 1);
+    };
+
     // 添加EIT模块
     const addEitModule = () => {
       projectEdit.value.eitModules.push({
@@ -627,6 +652,8 @@ export default {
       updateProjectEdit,
       updateMilestoneEdit,
       updateTimeRecordEdit,
+      addPeriod,
+      removePeriod,
       addEitModule,
       removeEitModule,
       addHardwareSoftware,

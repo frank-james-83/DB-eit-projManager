@@ -25,6 +25,10 @@
                 <el-checkbox :model-value="columns.manager.visible"
                   @change="() => handleColumnChange('manager')">项目经理</el-checkbox>
               </el-dropdown-item>
+              <el-dropdown-item command="budgetHours" :disabled="!canHide('budgetHours')">
+                <el-checkbox :model-value="columns.budgetHours.visible"
+                  @change="() => handleColumnChange('budgetHours')">预算工时</el-checkbox>
+              </el-dropdown-item>
               <el-dropdown-item command="plannedHours" :disabled="!canHide('plannedHours')">
                 <el-checkbox :model-value="columns.plannedHours.visible"
                   @change="() => handleColumnChange('plannedHours')">计划工时</el-checkbox>
@@ -69,6 +73,9 @@
         :filters="getUniqueManagers().map(m => ({ text: m, value: m }))"
         :filter-method="(value, row) => row.manager === value"></el-table-column>
 
+      <el-table-column v-if="columns.budgetHours.visible" prop="budgetHours" column-key="budgetHours"
+        label="预算工时" sortable></el-table-column>
+
       <el-table-column v-if="columns.plannedHours.visible" prop="plannedHours" column-key="plannedHours"
         label="计划工时" sortable></el-table-column>
 
@@ -86,7 +93,13 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { 
+  getProjectListSorting, 
+  getProjectListFilters,
+  saveProjectListSorting,
+  saveProjectListFilters
+} from '../utils/cookies'
 
 export default {
   name: 'ProjectList',
@@ -106,9 +119,64 @@ export default {
   },
   emits: ['update:searchQuery', 'project-click', 'project-name-click', 'column-change', 'sort-change', 'filter-change'],
   setup(props, { emit }) {
+    // 本地排序和过滤状态
+    const localSortState = ref({ prop: '', order: '' });
+    const localFilterState = ref({});
+
+    // 计算计划工时（所有periods.hours的总和）
+    const calculatePlannedHours = (project) => {
+      if (!project.periods || !Array.isArray(project.periods)) {
+        return 0;
+      }
+      return project.periods.reduce((total, period) => total + (period.hours || 0), 0);
+    };
+
+    // 计算已用工时（根据ProjectDetail.vue中的实际工时计算逻辑）
+    const calculateUsedHours = (project) => {
+      if (!project.periods || !Array.isArray(project.periods)) {
+        return 0;
+      }
+      
+      const now = new Date();
+      let totalUsedHours = 0;
+      
+      project.periods.forEach(period => {
+        const periodEnd = new Date(period.end);
+        
+        // 如果结束日期在当前日期之前，则全部为实际工时
+        if (periodEnd < now) {
+          totalUsedHours += period.hours || 0;
+          return;
+        }
+        
+        // 如果结束日期在当前日期之后，则按比例计算
+        const periodStart = new Date(period.start);
+        const totalTime = periodEnd.getTime() - periodStart.getTime();
+        
+        // 如果任务还没开始，实际工时为0
+        if (periodStart > now) {
+          return;
+        }
+        
+        // 计算到当前时间已完成的部分
+        const elapsed = now.getTime() - periodStart.getTime();
+        const ratio = Math.min(1, Math.max(0, elapsed / totalTime));
+        totalUsedHours += Math.round((period.hours || 0) * ratio);
+      });
+      
+      return totalUsedHours;
+    };
+
     // 过滤后的项目列表
     const filteredProjects = computed(() => {
-      let arr = props.projects;
+      let arr = props.projects.map(project => {
+        return {
+          ...project,
+          plannedHours: calculatePlannedHours(project),
+          usedHours: calculateUsedHours(project)
+        };
+      });
+      
       // 搜索框过滤
       if (props.searchQuery) {
         const query = props.searchQuery.toLowerCase();
@@ -119,8 +187,62 @@ export default {
         );
       }
       
+      // 表头过滤
+      Object.entries(localFilterState.value).forEach(([prop, values]) => {
+        if (!Array.isArray(values) || values.length === 0) {
+          // 不过滤该字段
+          return;
+        }
+        arr = arr.filter(row => {
+          const rowValue = row[prop] !== undefined && row[prop] !== null ? row[prop].toString().trim() : '';
+          const match = values.map(v => v !== undefined && v !== null ? v.toString().trim() : '').includes(rowValue);
+          return match;
+        });
+      });
+      
+      // 排序
+      if (localSortState.value.prop && localSortState.value.order) {
+        arr = [...arr].sort((a, b) => {
+          const prop = localSortState.value.prop;
+          if (localSortState.value.order === 'ascending') {
+            return a[prop] > b[prop] ? 1 : a[prop] < b[prop] ? -1 : 0;
+          } else {
+            return a[prop] < b[prop] ? 1 : a[prop] > b[prop] ? -1 : 0;
+          }
+        });
+      }
+      
       return arr;
     });
+
+    // 页面加载时恢复排序和过滤状态
+    onMounted(() => {
+      try {
+        // 加载排序设置
+        const savedSort = getProjectListSorting();
+        if (savedSort) {
+          localSortState.value = savedSort;
+        }
+
+        // 加载过滤设置
+        const savedFilters = getProjectListFilters();
+        if (savedFilters) {
+          localFilterState.value = savedFilters;
+        }
+      } catch (e) {
+        console.error('加载项目列表设置时出错:', e);
+      }
+    });
+
+    // 监听排序和过滤状态变化并保存到cookie
+    watch([localSortState, localFilterState], () => {
+      try {
+        saveProjectListSorting(localSortState.value);
+        saveProjectListFilters(localFilterState.value);
+      } catch (e) {
+        console.error('保存项目列表设置时出错:', e);
+      }
+    }, { deep: true });
 
     // 方法
     const handleProjectClick = (project) => {
@@ -158,10 +280,12 @@ export default {
     };
 
     const handleSortChange = ({ prop, order }) => {
+      localSortState.value = { prop, order };
       emit('sort-change', { prop, order });
     };
     
     const handleFilterChange = (filters) => {
+      localFilterState.value = filters;
       emit('filter-change', filters);
     };
 
