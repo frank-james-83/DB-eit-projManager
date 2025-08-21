@@ -10,13 +10,10 @@ export const mockProjects = [
     periods: [
   { start: '2023-01-15', end: '2023-01-30', hours: 120, user: '张三', comment: '前期需求梳理' },
   { start: '2023-02-10', end: '2023-02-20', hours: 80, user: '李四', comment: '系统设计与评审' },
-  { start: '2023-03-01', end: '2023-03-10', hours: 100, user: '王五', comment: '开发与测试' }
+  { start: '2026-03-01', end: '2026-03-10', hours: 100, user: '王五', comment: '开发与测试' }
     ],
     color: '#42b983',
     budgetHours: 2400,
-    plannedHours: 2400,
-    usedHours: 1800,
-    progress: 75,
     status: 'inProgress',
     budget: 500000,
     spent: 350000,
@@ -33,7 +30,7 @@ export const mockProjects = [
       { date: '2023-02-01', user: '张三', hours: 8, task: '系统架构优化' },
       { date: '2023-02-02', user: '李四', hours: 6, task: '数据库设计' },
       { date: '2023-02-03', user: '王五', hours: 7, task: '前端界面开发' },
-      { date: '2023-02-04', user: '赵六', hours: 8, task: '后端接口开发' }
+      { date: '2026-02-04', user: '赵六', hours: 8, task: '后端接口开发' }
     ]
   },
   {
@@ -50,9 +47,6 @@ export const mockProjects = [
     ],
     color: '#f39c12',
     budgetHours: 3600,
-    plannedHours: 3600,
-    usedHours: 1500,
-    progress: 40,
     status: 'inProgress',
     budget: 800000,
     spent: 400000,
@@ -85,9 +79,6 @@ export const mockProjects = [
     ],
     color: '#e74c3c',
     budgetHours: 1200,
-    plannedHours: 1800,
-    usedHours: 450,
-    progress: 25,
     status: 'inProgress',
     budget: 300000,
     spent: 80000,
@@ -121,9 +112,6 @@ export const mockProjects = [
     ],
     color: '#8e44ad',
     budgetHours: 1200,
-    plannedHours: 1200,
-    usedHours: 600,
-    progress: 50,
     status: 'inProgress',
     budget: 200000,
     spent: 100000,
@@ -152,10 +140,7 @@ export const mockProjects = [
   { start: '2023-06-03', end: '2023-06-05', hours: 15, user: '王五', comment: '执行与总结' }
     ],
     color: '#16a085',
-    budgetHours: 600,
-    plannedHours: 600,
-    usedHours: 200,
-    progress: 20,
+    budgetHours: 1200,
     status: 'notStarted',
     budget: 100000,
     spent: 20000,

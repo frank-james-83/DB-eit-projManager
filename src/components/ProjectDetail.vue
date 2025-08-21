@@ -23,6 +23,7 @@
           <el-descriptions-item label="开始日期">{{ formatDate(projectEdit.startDate) }}</el-descriptions-item>
           <el-descriptions-item label="结束日期">{{ formatDate(projectEdit.endDate) }}</el-descriptions-item>
           <el-descriptions-item label="状态">{{ getStatusLabel(projectEdit.status) }}</el-descriptions-item>
+          <el-descriptions-item label="工时预算">{{ projectEdit.budgetHours }}h</el-descriptions-item>
           <el-descriptions-item label="项目描述">{{ projectEdit.description }}</el-descriptions-item>
           <el-descriptions-item label="CEP No.">{{ projectEdit.cepNo }}</el-descriptions-item>
           <el-descriptions-item label="客户简称">{{ projectEdit.customerShortName }}</el-descriptions-item>
@@ -74,6 +75,9 @@
               <el-option label="已延期" value="delayed" />
             </el-select>
           </el-form-item>
+          <el-form-item label="工时预算">
+            <el-input v-model.number="projectEdit.budgetHours" type="number" />
+          </el-form-item>
           <el-form-item label="项目描述">
             <el-input v-model="projectEdit.description" type="textarea" />
           </el-form-item>
@@ -96,30 +100,23 @@
       </el-tab-pane>
       <!-- 进度跟踪 -->
       <el-tab-pane label="进度跟踪" name="progress">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-          <el-button size="small" @click="toggleEdit('progress')">{{ editMode.progress ? '保存' : '编辑' }}</el-button>
-          <el-button v-if="editMode.progress" size="small" @click="cancelEdit('progress')">取消</el-button>
-        </div>
         <div class="progress-overview">
           <div class="progress-stats">
             <div class="stat-item">
               <div class="stat-label">总体进度</div>
-              <div class="stat-value" v-if="!editMode.progress">{{ projectEdit.progress }}%</div>
-              <el-input v-else v-model.number="projectEdit.progress" style="width: 80px;" suffix="%" type="number" />
+              <div class="stat-value">{{ calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit)) }}%</div>
             </div>
             <div class="stat-item">
               <div class="stat-label">计划工时</div>
-              <div class="stat-value" v-if="!editMode.progress">{{ projectEdit.plannedHours }}h</div>
-              <el-input v-else v-model.number="projectEdit.plannedHours" style="width: 80px;" suffix="h" type="number" />
+              <div class="stat-value">{{ calculateProjectPlannedHours(projectEdit) }}h</div>
             </div>
             <div class="stat-item">
               <div class="stat-label">已用工时</div>
-              <div class="stat-value" v-if="!editMode.progress">{{ projectEdit.usedHours }}h</div>
-              <el-input v-else v-model.number="projectEdit.usedHours" style="width: 80px;" suffix="h" type="number" />
+              <div class="stat-value">{{ calculateProjectUsedHours(projectEdit) }}h</div>
             </div>
           </div>
-          <el-progress :percentage="projectEdit.progress" :stroke-width="8"
-            :stroke-color="getProgressColor(projectEdit.progress)" class="mt-4"></el-progress>
+          <el-progress :percentage="calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit))" :stroke-width="8"
+            :stroke-color="getProgressColor(calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit)))" class="mt-4"></el-progress>
         </div>
         <h4 class="mt-4">关键里程碑</h4>
         <el-timeline v-if="!editMode.progress">
@@ -530,7 +527,7 @@ export default {
       });
 
       // 获取目标工时值
-      const targetHours = props.project.plannedHours || 0;
+      const targetHours = props.project.budgetHours || 0;
       
       // 构建目标线数据
       const targetLine = new Array(dates.length).fill(targetHours);
@@ -618,6 +615,72 @@ export default {
 
     const formatCurrency = (value) => {
       return `¥${value.toLocaleString()}`;
+    };
+
+    // 计算计划工时（所有periods.hours的总和）
+    const calculateProjectPlannedHours = (project) => {
+      if (!project.periods || !Array.isArray(project.periods)) {
+        return 0;
+      }
+      return project.periods.reduce((total, period) => total + (period.hours || 0), 0);
+    };
+
+    // 计算已用工时（根据ProjectList.vue中的实际工时计算逻辑）
+    const calculateProjectUsedHours = (project) => {
+      if (!project.periods || !Array.isArray(project.periods)) {
+        return 0;
+      }
+      
+      const now = new Date();
+      let totalUsedHours = 0;
+      
+      project.periods.forEach(period => {
+        const periodEnd = new Date(period.end);
+        
+        // 如果结束日期在当前日期之前，则全部为实际工时
+        if (periodEnd < now) {
+          totalUsedHours += period.hours || 0;
+          return;
+        }
+        
+        // 如果结束日期在当前日期之后，则按比例计算
+        const periodStart = new Date(period.start);
+        const totalTime = periodEnd.getTime() - periodStart.getTime();
+        
+        // 如果任务还没开始，实际工时为0
+        if (periodStart > now) {
+          return;
+        }
+        
+        // 计算到当前时间已完成的部分
+        const elapsed = now.getTime() - periodStart.getTime();
+        const ratio = Math.min(1, Math.max(0, elapsed / totalTime));
+        totalUsedHours += Math.round((period.hours || 0) * ratio);
+      });
+      
+      return totalUsedHours;
+    };
+
+    // 计算进度百分比（与ProjectList.vue保持一致）
+    const calculateProgressPercentage = (usedHours, plannedHours) => {
+      if (!plannedHours || plannedHours === 0) return 0;
+      const percentage = Math.round((usedHours / plannedHours) * 100);
+      return Math.min(100, Math.max(0, percentage));
+    };
+
+    // 计算总体进度（计划工时和已用工时的比例）
+    const calculateOverallProgress = (project) => {
+      const plannedHours = project.plannedHours || 0;
+      const usedHours = project.usedHours || 0;
+      
+      if (plannedHours === 0) {
+        return 0;
+      }
+      
+      // 计算进度百分比，保留整数
+      const progress = Math.round((usedHours / plannedHours) * 100);
+      // 确保进度在0-100范围内
+      return Math.max(0, Math.min(100, progress));
     };
 
     // 计算实际工时（当前日期之前的工时）
@@ -784,6 +847,8 @@ export default {
       getProgressColor,
       calculateActualHours,
       calculatePlannedHours,
+      calculateOverallProgress,
+      calculateProgressPercentage,
       toggleEdit,
       cancelEdit,
       closePanel,
@@ -805,7 +870,9 @@ export default {
       materialCategoriesList,
       hoursChartOption,
       showChart,
-      onChartReady
+      onChartReady,
+      calculateProjectPlannedHours,
+      calculateProjectUsedHours
     };
   }
 };

@@ -82,10 +82,17 @@
       <el-table-column v-if="columns.usedHours.visible" prop="usedHours" column-key="usedHours" label="已用工时"
         sortable></el-table-column>
 
-      <el-table-column v-if="columns.progress.visible" prop="progress" column-key="progress" label="进度" sortable>
+      <el-table-column v-if="columns.progress.visible" column-key="progress" label="进度" sortable>
         <template #default="scope">
-          <el-progress :percentage="scope.row.progress" :stroke-width="6"
-            :stroke-color="getProgressColor(scope.row.progress)"></el-progress>
+          <div class="progress-cell">
+            <el-progress 
+              :percentage="calculateProgressPercentage(scope.row.usedHours, scope.row.plannedHours)" 
+              :stroke-width="6"
+              :stroke-color="getProgressColor(calculateProgressPercentage(scope.row.usedHours, scope.row.plannedHours))"
+              :text-inside="false"
+              :show-text="true">
+            </el-progress>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -245,6 +252,12 @@ export default {
     }, { deep: true });
 
     // 方法
+    const calculateProgressPercentage = (usedHours, plannedHours) => {
+      if (!plannedHours || plannedHours === 0) return 0;
+      const percentage = Math.round((usedHours / plannedHours) * 100);
+      return Math.min(100, Math.max(0, percentage));
+    };
+
     const handleProjectClick = (project) => {
       emit('project-click', project);
     };
@@ -298,6 +311,7 @@ export default {
       canHide,
       getUniqueManagers,
       getProgressColor,
+      calculateProgressPercentage,
       handleSortChange,
       handleFilterChange
     };
@@ -344,6 +358,17 @@ export default {
   color: #1e88e5;
   cursor: pointer;
   text-decoration: underline;
+}
+
+.progress-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.progress-cell :deep(.el-progress) {
+  width: 100%;
 }
 
 /* 表格内容强制单行显示，防止因换行导致行高变化 */
