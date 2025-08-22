@@ -2,355 +2,75 @@
   <div class="detail-panel" :class="{ 'panel-open': visible }">
     <div class="panel-header">
       <h2>{{ project?.name || '项目详情' }}</h2>
-      <el-button size="small" @click="closePanel"><el-icon>
+      <el-button size="small" @click="closePanel">
+        <el-icon>
           <Close />
-        </el-icon></el-button>
+        </el-icon>
+      </el-button>
     </div>
 
     <el-tabs v-if="project" type="card" class="detail-tabs" v-model="activeTab">
       <!-- 基本信息 -->
       <el-tab-pane label="基本信息" name="basic">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-          <el-button size="small" @click="toggleEdit('basic')">{{ editMode.basic ? '保存' : '编辑' }}</el-button>
-          <el-button v-if="editMode.basic" size="small" @click="cancelEdit('basic')">取消</el-button>
-        </div>
-        <el-descriptions :column="1" border v-if="!editMode.basic">
-          <el-descriptions-item label="项目编号">{{ projectEdit.projectId }}</el-descriptions-item>
-          <el-descriptions-item label="EIT_WBS号">{{ projectEdit.eitWbs }}</el-descriptions-item>
-          <el-descriptions-item label="项目名称">{{ projectEdit.name }}</el-descriptions-item>
-          <el-descriptions-item label="项目经理">{{ projectEdit.manager }}</el-descriptions-item>
-          <el-descriptions-item label="现场经理">{{ projectEdit.siteManager }}</el-descriptions-item>
-          <el-descriptions-item label="开始日期">{{ formatDate(projectEdit.startDate) }}</el-descriptions-item>
-          <el-descriptions-item label="结束日期">{{ formatDate(projectEdit.endDate) }}</el-descriptions-item>
-          <el-descriptions-item label="状态">{{ getStatusLabel(projectEdit.status) }}</el-descriptions-item>
-          <el-descriptions-item label="工时预算">{{ projectEdit.budgetHours }}h</el-descriptions-item>
-          <el-descriptions-item label="项目描述">{{ projectEdit.description }}</el-descriptions-item>
-          <el-descriptions-item label="CEP No.">{{ projectEdit.cepNo }}</el-descriptions-item>
-          <el-descriptions-item label="客户简称">{{ projectEdit.customerShortName }}</el-descriptions-item>
-          <el-descriptions-item label="客户全称">{{ projectEdit.customerFullName }}</el-descriptions-item>
-          <el-descriptions-item label="客户英文名称">{{ projectEdit.customerEnglishName }}</el-descriptions-item>
-          <el-descriptions-item label="客户地址">{{ projectEdit.customerAddress }}</el-descriptions-item>
-        </el-descriptions>
-        <el-form v-else :model="projectEdit" label-width="120px" label-position="left">
-          <el-form-item label="项目编号">
-            <el-input v-model="projectEdit.projectId" />
-          </el-form-item>
-          <el-form-item label="EIT_WBS号">
-            <el-input v-model="projectEdit.eitWbs" />
-          </el-form-item>
-          <el-form-item label="项目名称">
-            <el-input v-model="projectEdit.name" />
-          </el-form-item>
-          <el-form-item label="项目经理">
-            <el-select v-model="projectEdit.manager" placeholder="请选择项目经理">
-              <el-option
-                v-for="manager in projectManagers"
-                :key="manager.id"
-                :label="manager.name"
-                :value="manager.name">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="现场经理">
-            <el-select v-model="projectEdit.siteManager" placeholder="请选择现场经理">
-              <el-option
-                v-for="manager in siteManagers"
-                :key="manager.id"
-                :label="manager.name"
-                :value="manager.name">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="开始日期">
-            <el-date-picker v-model="projectEdit.startDate" type="date" />
-          </el-form-item>
-          <el-form-item label="结束日期">
-            <el-date-picker v-model="projectEdit.endDate" type="date" />
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="projectEdit.status">
-              <el-option label="未开始" value="notStarted" />
-              <el-option label="进行中" value="inProgress" />
-              <el-option label="已完成" value="completed" />
-              <el-option label="已延期" value="delayed" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="工时预算">
-            <el-input v-model.number="projectEdit.budgetHours" type="number" />
-          </el-form-item>
-          <el-form-item label="项目描述">
-            <el-input v-model="projectEdit.description" type="textarea" />
-          </el-form-item>
-          <el-form-item label="CEP No.">
-            <el-input v-model="projectEdit.cepNo" />
-          </el-form-item>
-          <el-form-item label="客户简称">
-            <el-input v-model="projectEdit.customerShortName" />
-          </el-form-item>
-          <el-form-item label="客户全称">
-            <el-input v-model="projectEdit.customerFullName" />
-          </el-form-item>
-          <el-form-item label="客户英文名称">
-            <el-input v-model="projectEdit.customerEnglishName" />
-          </el-form-item>
-          <el-form-item label="客户地址">
-            <el-input v-model="projectEdit.customerAddress" />
-          </el-form-item>
-        </el-form>
+        <BasicInfo 
+          :project="projectEdit" 
+          :is-edit-mode="editMode.basic"
+          :project-managers="projectManagers"
+          :site-managers="siteManagers"
+          :format-date="formatDate"
+          :get-status-label="getStatusLabel"
+          @toggle-edit="toggleEdit('basic')"
+          @cancel-edit="cancelEdit('basic')" />
       </el-tab-pane>
+      
       <!-- 进度跟踪 -->
       <el-tab-pane label="进度跟踪" name="progress">
-        <div class="progress-overview">
-          <div class="progress-stats">
-            <div class="stat-item">
-              <div class="stat-label">总体进度</div>
-              <div class="stat-value">{{ calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit)) }}%</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">计划工时</div>
-              <div class="stat-value">{{ calculateProjectPlannedHours(projectEdit) }}h</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">已用工时</div>
-              <div class="stat-value">{{ calculateProjectUsedHours(projectEdit) }}h</div>
-            </div>
-          </div>
-          <el-progress :percentage="calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit))" :stroke-width="8"
-            :stroke-color="getProgressColor(calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit)))" class="mt-4"></el-progress>
-        </div>
-        <h4 class="mt-4">关键里程碑</h4>
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-          <el-button size="small" @click="toggleEdit('progress')">{{ editMode.progress ? '保存' : '编辑' }}</el-button>
-          <el-button v-if="editMode.progress" size="small" @click="addMilestone">新增</el-button>
-          <el-button v-if="editMode.progress" size="small" @click="cancelEdit('progress')">取消</el-button>
-        </div>
-        <el-timeline v-if="!editMode.progress">
-          <el-timeline-item v-for="(milestone, index) in projectEdit.milestones" :key="index"
-            :timestamp="formatDate(milestone.date)" :status="milestone.completed ? 'success' : 'process'">
-            {{ milestone.name }}
-            <el-tag :type="milestone.completed ? 'success' : 'info'" size="small" class="ml-2">
-              {{ milestone.completed ? '已完成' : '进行中' }}
-            </el-tag>
-            <el-tag v-if="milestone.tag" size="small" class="ml-2">
-              {{ milestone.tag }}
-            </el-tag>
-          </el-timeline-item>
-        </el-timeline>
-        <el-table v-else :data="projectEdit.milestones" border size="small" style="margin-bottom: 10px;">
-          <el-table-column prop="name" label="里程碑名称">
-            <template #default="scope">
-              <el-input v-model="projectEdit.milestones[scope.$index].name" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="date" label="日期">
-            <template #default="scope">
-              <el-date-picker v-model="projectEdit.milestones[scope.$index].date" type="date" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="completed" label="状态">
-            <template #default="scope">
-              <el-switch v-model="projectEdit.milestones[scope.$index].completed" active-text="已完成" inactive-text="进行中" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="tag" label="标签">
-            <template #default="scope">
-              <el-input v-model="projectEdit.milestones[scope.$index].tag" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80">
-            <template #default="scope">
-              <el-button @click="removeMilestone(scope.$index)" type="danger" size="small">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <ProgressTracking
+          :project="projectEdit"
+          :is-edit-mode="editMode.progress"
+          :progress-percentage="calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit))"
+          :planned-hours="calculateProjectPlannedHours(projectEdit)"
+          :used-hours="calculateProjectUsedHours(projectEdit)"
+          :format-date="formatDate"
+          :get-progress-color="getProgressColor"
+          @toggle-edit="toggleEdit('progress')"
+          @cancel-edit="cancelEdit('progress')"
+          @add-milestone="addMilestone"
+          @remove-milestone="removeMilestone" />
       </el-tab-pane>
+      
       <!-- 工时统计 -->
       <el-tab-pane label="工时统计" name="hours">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-          <el-button size="small" @click="toggleEdit('hours')">{{ editMode.hours ? '保存' : '编辑' }}</el-button>
-          <el-button v-if="editMode.hours" size="small" @click="addPeriod">增加区间</el-button>
-          <el-button v-if="editMode.hours" size="small" @click="cancelEdit('hours')">取消</el-button>
-        </div>
-        <div v-if="activeTab === 'hours' && !editMode.hours && showChart" style="height: 300px; margin-bottom: 20px;">
-          <v-chart 
-            :option="hoursChartOption" 
-            autoresize 
-            class="mt-4" 
-            style="height: 100%;"
-            @ready="onChartReady"></v-chart>
-        </div>
-        <el-table v-if="!editMode.hours" :data="projectEdit.periods" border size="small">
-          <el-table-column prop="start" label="开始时间">
-            <template #default="scope">
-              {{ formatDate(scope.row.start) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="end" label="结束时间">
-            <template #default="scope">
-              {{ formatDate(scope.row.end) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="工时">
-            <template #default="scope">
-              <div>实际: {{ calculateActualHours(scope.row) }}h</div>
-              <div>计划: {{ calculatePlannedHours(scope.row) }}h</div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="user" label="EIT工程师"></el-table-column>
-          <el-table-column prop="comment" label="备注"></el-table-column>
-        </el-table>
-        <el-table v-else :data="projectEdit.periods" border size="small">
-          <el-table-column label="开始时间">
-            <template #default="scope">
-              <el-date-picker v-model="projectEdit.periods[scope.$index].start" type="date" />
-            </template>
-          </el-table-column>
-          <el-table-column label="结束时间">
-            <template #default="scope">
-              <el-date-picker v-model="projectEdit.periods[scope.$index].end" type="date" />
-            </template>
-          </el-table-column>
-          <el-table-column label="工时">
-            <template #default="scope">
-              <el-input v-model.number="projectEdit.periods[scope.$index].hours" type="number" />
-            </template>
-          </el-table-column>
-          <el-table-column label="EIT工程师">
-            <template #default="scope">
-              <el-select 
-                v-model="projectEdit.periods[scope.$index].user" 
-                filterable 
-                allow-create 
-                default-first-option
-                placeholder="请选择或输入EIT工程师">
-                <el-option
-                  v-for="engineer in eitEngineersList"
-                  :key="engineer.id"
-                  :label="engineer.name"
-                  :value="engineer.name">
-                </el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="备注">
-            <template #default="scope">
-              <el-input v-model="projectEdit.periods[scope.$index].comment" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80">
-            <template #default="scope">
-              <el-button @click="removePeriod(scope.$index)" type="danger" size="small">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <HoursStatistics
+          :project="projectEdit"
+          :is-edit-mode="editMode.hours"
+          :show-chart="showChart"
+          :chart-option="hoursChartOption"
+          :format-date="formatDate"
+          :calculate-actual-hours="calculateActualHours"
+          :calculate-planned-hours="calculatePlannedHours"
+          :eit-engineers-list="eitEngineersList"
+          @toggle-edit="toggleEdit('hours')"
+          @cancel-edit="cancelEdit('hours')"
+          @add-period="addPeriod"
+          @remove-period="removePeriod"
+          @chart-ready="onChartReady" />
       </el-tab-pane>
       
       <!-- EIT信息 -->
       <el-tab-pane label="EIT信息" name="eit">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-          <el-button size="small" @click="toggleEdit('eit')">{{ editMode.eit ? '保存' : '编辑' }}</el-button>
-          <el-button v-if="editMode.eit" size="small" @click="cancelEdit('eit')">取消</el-button>
-        </div>
-        
-        <!-- EIT模块 -->
-        <h4>EIT模块</h4>
-        <el-table v-if="!editMode.eit" :data="projectEdit.eitModules" border size="small" style="margin-bottom: 20px;">
-          <el-table-column prop="name" label="模块名称"></el-table-column>
-          <el-table-column prop="value" label="数量/状态"></el-table-column>
-          <el-table-column prop="remark" label="备注"></el-table-column>
-        </el-table>
-        <div v-else>
-          <el-table :data="projectEdit.eitModules" border size="small" style="margin-bottom: 10px;">
-            <el-table-column label="模块名称" width="200">
-              <template #default="scope">
-                <el-select 
-                  v-model="scope.row.name" 
-                  filterable 
-                  allow-create 
-                  default-first-option
-                  placeholder="请选择或输入模块名称">
-                  <el-option label="基础模块" value="基础模块"></el-option>
-                  <el-option label="API模块" value="API模块"></el-option>
-                  <el-option label="EDS模块" value="EDS模块"></el-option>
-                  <el-option label="QC模块" value="QC模块"></el-option>
-                  <el-option label="ECO模块" value="ECO模块"></el-option>
-                  <el-option label="Review模块" value="Review模块"></el-option>
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="数量/状态">
-              <template #default="scope">
-                <el-input v-model="scope.row.value" placeholder="请输入数量或状态" />
-              </template>
-            </el-table-column>
-            <el-table-column label="备注" width="200">
-              <template #default="scope">
-                <el-input v-model="scope.row.remark" placeholder="请输入备注" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="scope">
-                <el-button @click="removeEitModule(scope.$index)" type="danger" size="small">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div style="margin-bottom: 20px;">
-            <el-button @click="addEitModule" size="small">添加模块</el-button>
-          </div>
-        </div>
-        
-        <!-- 软硬件 -->
-        <h4>软硬件</h4>
-        <el-table v-if="!editMode.eit" :data="projectEdit.hardwareSoftware" border size="small">
-          <el-table-column prop="itemNumber" label="物料号"></el-table-column>
-          <el-table-column prop="name" label="名称"></el-table-column>
-          <el-table-column prop="category" label="类别"></el-table-column>
-          <el-table-column prop="unit" label="单位"></el-table-column>
-          <el-table-column prop="quantity" label="数量"></el-table-column>
-          <el-table-column prop="description" label="规格"></el-table-column>
-        </el-table>
-        <div v-else>
-          <el-table :data="projectEdit.hardwareSoftware" border size="small">
-            <el-table-column label="物料">
-              <template #default="scope">
-                <el-select 
-                  v-model="scope.row.materialId" 
-                  filterable 
-                  placeholder="请选择物料"
-                  @change="handleMaterialSelect(scope.row, $event)">
-                  <el-option
-                    v-for="material in materialsList"
-                    :key="material.id"
-                    :label="`${material.name} (${material.spec})`"
-                    :value="material.id">
-                  </el-option>
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="物料号" prop="itemNumber"></el-table-column>
-            <el-table-column label="名称" prop="name"></el-table-column>
-            <el-table-column label="类别" prop="category"></el-table-column>
-            <el-table-column label="单位" prop="unit"></el-table-column>
-            <el-table-column label="数量">
-              <template #default="scope">
-                <el-input v-model.number="scope.row.quantity" type="number" placeholder="请输入数量" />
-              </template>
-            </el-table-column>
-            <el-table-column label="规格">
-              <template #default="scope">
-                <el-input v-model="scope.row.description" placeholder="请输入规格" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="scope">
-                <el-button @click="removeHardwareSoftware(scope.$index)" type="danger" size="small">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div style="margin-top: 10px;">
-            <el-button @click="addHardwareSoftware" size="small">添加软硬件</el-button>
-          </div>
-        </div>
+        <EitInfo
+          :project="projectEdit"
+          :is-edit-mode="editMode.eit"
+          :materials-list="materialsList"
+          :material-categories-list="materialCategoriesList"
+          @toggle-edit="toggleEdit('eit')"
+          @cancel-edit="cancelEdit('eit')"
+          @add-eit-module="addEitModule"
+          @remove-eit-module="removeEitModule"
+          @add-hardware-software="addHardwareSoftware"
+          @remove-hardware-software="removeHardwareSoftware"
+          @material-select="handleMaterialSelect" />
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -364,8 +84,6 @@ import { use } from "echarts/core"
 import { CanvasRenderer } from "echarts/renderers"
 import { LineChart } from "echarts/charts"
 import { TooltipComponent, LegendComponent, GridComponent } from "echarts/components"
-import {  projectManagers, siteManagers, eitEngineers, materials, materialCategories } from '../api/mockData.ts';
-import { mockProjects } from '../api/mockProjects';
 import { 
   projectManagers as pmList, 
   siteManagers as smList, 
@@ -373,6 +91,12 @@ import {
   materials as matList, 
   materialCategories as matCatList 
 } from '../api/mockData';
+
+// 引入子组件
+import BasicInfo from './detail/BasicInfo.vue';
+import ProgressTracking from './detail/ProgressTracking.vue';
+import HoursStatistics from './detail/HoursStatistics.vue';
+import EitInfo from './detail/EitInfo.vue';
 
 use([
   CanvasRenderer,
@@ -385,7 +109,11 @@ use([
 export default {
   name: 'ProjectDetail',
   components: {
-    VChart
+    VChart,
+    BasicInfo,
+    ProgressTracking,
+    HoursStatistics,
+    EitInfo
   },
   props: {
     project: {
@@ -482,11 +210,11 @@ export default {
     };
     
     // 下拉选项数据
-    const projectManagersList = projectManagers.concat(pmList);
-    const siteManagersList = siteManagers.concat(smList);
-    const eitEngineersList = eitEngineers.concat(eitList);
-    const materialsList = materials.concat(matList);
-    const materialCategoriesList = materialCategories.concat(matCatList);
+    const projectManagersList = pmList;
+    const siteManagersList = smList;
+    const eitEngineersList = eitList;
+    const materialsList = matList;
+    const materialCategoriesList = matCatList;
     
     const projectEdit = ref({});
 
@@ -749,21 +477,6 @@ export default {
       return Math.round((period.hours || 0) * ratio);
     };
 
-    // 更新编辑中的项目属性
-    const updateProjectEdit = (field, value) => {
-      projectEdit.value[field] = value;
-    };
-
-    // 更新里程碑编辑
-    const updateMilestoneEdit = (index, field, value) => {
-      projectEdit.value.milestones[index][field] = value;
-    };
-
-    // 更新工时记录编辑
-    const updateTimeRecordEdit = (index, field, value) => {
-      projectEdit.value.timeRecords[index][field] = value;
-    };
-
     // 添加工时区间
     const addPeriod = () => {
       if (!projectEdit.value.periods) {
@@ -961,40 +674,6 @@ export default {
   height: 100%;
   overflow-y: auto;
   padding: 15px;
-}
-.progress-overview {
-  margin-bottom: 20px;
-}
-
-.progress-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.stat-item {
-  text-align: center;
-  flex: 1;
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  margin: 0 5px;
-}
-
-.stat-label {
-  color: #666;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1e88e5;
-}
-
-.hours-chart {
-  height: 200px;
 }
 
 /* 响应式调整 */
