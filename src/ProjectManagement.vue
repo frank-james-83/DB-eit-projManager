@@ -1,4 +1,3 @@
-    // ...existing code...
 <template>
   <div class="project-management-container">
     <!-- 标题栏 -->
@@ -8,6 +7,10 @@
         <span>EIT项目管理系统</span>
       </div>
       <div class="header-actions">
+        <div class="user-info">
+          <span class="username">欢迎, {{ username }}</span>
+          <span class="current-time">{{ currentTime }}</span>
+        </div>
         <el-button type="primary" size="small"><el-icon>
             <Plus />
           </el-icon>新建项目</el-button>
@@ -24,7 +27,7 @@
             <el-dropdown-menu>
               <el-dropdown-item>系统设置</el-dropdown-item>
               <el-dropdown-item>用户中心</el-dropdown-item>
-              <el-dropdown-item>退出登录</el-dropdown-item>
+              <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -118,7 +121,8 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { fetchProjects, addProject, updateProject, deleteProject } from './api/project';
 import ProjectList from './components/ProjectList.vue';
 import GanttChart from './components/GanttChart.vue';
@@ -146,6 +150,69 @@ export default {
     ProjectDetail
   },
   setup() {
+    const router = useRouter();
+    
+    // 用户信息
+    const username = ref('');
+    const currentTime = ref('');
+    let timeInterval = null;
+    
+    // 初始化用户信息
+    const initUserInfo = () => {
+      // 从localStorage获取用户名
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          username.value = user.username || '未知用户';
+        } catch (e) {
+          username.value = '未知用户';
+        }
+      } else {
+        username.value = '未知用户';
+      }
+      
+      // 更新时间
+      updateTime();
+    };
+    
+    // 更新当前时间
+    const updateTime = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      currentTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+    
+    // 开始时间更新定时器
+    const startTimeUpdater = () => {
+      if (timeInterval) {
+        clearInterval(timeInterval);
+      }
+      timeInterval = setInterval(updateTime, 1000);
+    };
+    
+    // 退出登录
+    const handleLogout = () => {
+      // 清除localStorage中的用户信息
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      
+      // 停止时间更新
+      if (timeInterval) {
+        clearInterval(timeInterval);
+        timeInterval = null;
+      }
+      
+      // 跳转到登录页面
+      router.push('/login');
+    };
+
     // 状态管理
     const searchQuery = ref('');
     const timeRange = ref('month');
@@ -172,10 +239,23 @@ export default {
 
     // 示例：页面加载时获取项目列表
     onMounted(async () => {
+      // 初始化用户信息
+      initUserInfo();
+      
+      // 开始时间更新
+      startTimeUpdater();
+      
       // 从cookie中恢复设置
       loadSettingsFromCookies();
       
       projects.value = await fetchProjects();
+    });
+    
+    // 组件卸载时清理定时器
+    onUnmounted(() => {
+      if (timeInterval) {
+        clearInterval(timeInterval);
+      }
     });
 
     // 排序和过滤状态
@@ -431,6 +511,8 @@ export default {
       columns,
       projects,
       filteredProjects,
+      sortState,
+      filterState,
       periodEditDialog,
       handleProjectClick,
       handleProjectNameClick,
@@ -440,14 +522,18 @@ export default {
       handleFilterChange,
       prevTimeRange,
       nextTimeRange,
-      handleTimeRangeChange,
       handleDateRangeChange,
+      handleTimeRangeChange,
       openPeriodEditDialog,
       closePeriodEditDialog,
       addPeriod,
       removePeriod,
       confirmPeriodEdit,
-      updateProject
+      updateProject,
+      // 用户信息相关
+      username,
+      currentTime,
+      handleLogout
     };
   }
 };
@@ -488,6 +574,24 @@ export default {
 .header-actions {
   display: flex;
   align-items: center;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  margin-right: 20px;
+  font-size: 14px;
+  text-align: right;
+}
+
+.username {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.current-time {
+  font-size: 12px;
+  opacity: 0.9;
 }
 
 .main-content {

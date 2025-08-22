@@ -31,3 +31,8 @@ npm run dev
 ```sh
 npm run build
 ```
+
+### 清除登录状态的命令（浏览器控制台）
+localStorage.removeItem('access_token');
+localStorage.removeItem('refresh_token');
+localStorage.removeItem('user');

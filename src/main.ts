@@ -1,8 +1,9 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
+import router from './router'
 
-import App from './ProjectManagement.vue'
+import App from './App.vue'
 
 // 引入 Element Plus
 import ElementPlus from 'element-plus'
@@ -17,10 +18,6 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart } from 'echarts/charts'
 import { GridComponent, ToolboxComponent, TitleComponent } from 'echarts/components'
-// import * as echarts from 'echarts/core';
-// import { CanvasRenderer } from 'echarts/renderers';
-// import { LineChart, BarChart } from 'echarts/charts';
-// import { GridComponent, ToolboxComponent, TitleComponent } from 'echarts/components';
 
 
 // 配置 Echarts
@@ -36,7 +33,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// app.use(router)
+app.use(router)
 app.use(ElementPlus)
 
 app.mount('#app')
