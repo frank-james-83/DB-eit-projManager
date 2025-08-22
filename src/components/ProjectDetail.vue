@@ -119,12 +119,20 @@
             :stroke-color="getProgressColor(calculateProgressPercentage(calculateProjectUsedHours(projectEdit), calculateProjectPlannedHours(projectEdit)))" class="mt-4"></el-progress>
         </div>
         <h4 class="mt-4">关键里程碑</h4>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+          <el-button size="small" @click="toggleEdit('progress')">{{ editMode.progress ? '保存' : '编辑' }}</el-button>
+          <el-button v-if="editMode.progress" size="small" @click="addMilestone">新增</el-button>
+          <el-button v-if="editMode.progress" size="small" @click="cancelEdit('progress')">取消</el-button>
+        </div>
         <el-timeline v-if="!editMode.progress">
           <el-timeline-item v-for="(milestone, index) in projectEdit.milestones" :key="index"
             :timestamp="formatDate(milestone.date)" :status="milestone.completed ? 'success' : 'process'">
             {{ milestone.name }}
             <el-tag :type="milestone.completed ? 'success' : 'info'" size="small" class="ml-2">
               {{ milestone.completed ? '已完成' : '进行中' }}
+            </el-tag>
+            <el-tag v-if="milestone.tag" size="small" class="ml-2">
+              {{ milestone.tag }}
             </el-tag>
           </el-timeline-item>
         </el-timeline>
@@ -142,6 +150,16 @@
           <el-table-column prop="completed" label="状态">
             <template #default="scope">
               <el-switch v-model="projectEdit.milestones[scope.$index].completed" active-text="已完成" inactive-text="进行中" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="tag" label="标签">
+            <template #default="scope">
+              <el-input v-model="projectEdit.milestones[scope.$index].tag" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80">
+            <template #default="scope">
+              <el-button @click="removeMilestone(scope.$index)" type="danger" size="small">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -812,6 +830,24 @@ export default {
       }
     };
 
+    // 添加里程碑
+    const addMilestone = () => {
+      if (!projectEdit.value.milestones) {
+        projectEdit.value.milestones = [];
+      }
+      projectEdit.value.milestones.push({
+        name: '',
+        date: '',
+        completed: false,
+        tag: ''
+      });
+    };
+
+    // 删除里程碑
+    const removeMilestone = (index) => {
+      projectEdit.value.milestones.splice(index, 1);
+    };
+
     // 切换编辑/保存
     function toggleEdit(tab) {
       if (!editMode[tab]) {
@@ -859,6 +895,8 @@ export default {
       addHardwareSoftware,
       removeHardwareSoftware,
       handleMaterialSelect,
+      addMilestone,
+      removeMilestone,
       // 下拉选项数据
       projectManagers: projectManagersList,
       siteManagers: siteManagersList,
