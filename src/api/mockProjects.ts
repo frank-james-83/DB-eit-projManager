@@ -344,6 +344,22 @@ export const mockProjects = [
         communicationType: 'Ethernet',
         tagsReceived: 'Yes'
       }
+    ],
+    ecos: [
+      {
+        id: 1,
+        consumptionNameChinese: '贴标机电能',
+        consumptionNameEnglish: 'Labeller Power',
+        unit: 'kWh',
+        unitPrice: '24$/kWh'
+      },
+      {
+        id: 2,
+        consumptionNameChinese: '灌装机双氧水',
+        consumptionNameEnglish: 'Filler H2O2',
+        unit: 'm³',
+        unitPrice: '12$/m3'
+      }
     ]
   }
 ];
