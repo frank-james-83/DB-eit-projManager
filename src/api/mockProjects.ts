@@ -31,6 +31,44 @@ export const mockProjects = [
       { date: '2023-02-02', user: '李四', hours: 6, task: '数据库设计' },
       { date: '2023-02-03', user: '王五', hours: 7, task: '前端界面开发' },
       { date: '2026-02-04', user: '赵六', hours: 8, task: '后端接口开发' }
+    ],
+    equipments: [
+      {
+        id: 1,
+        localName: '吹瓶机',
+        englishName: 'Combi-blower',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'SBO22M#220086 COMBI C5 SBMXGM220086',
+        ipAddress: '',
+        plcType: 'B&R',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 2,
+        localName: '灌装机',
+        englishName: 'Combi-filler',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Combi Predis FMa 22/100/30T #1542',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 3,
+        localName: '上盖机',
+        englishName: 'cap feeder',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Aidlin 24-24',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      }
     ]
   },
   {
@@ -63,6 +101,44 @@ export const mockProjects = [
       { date: '2023-03-01', user: '李四', hours: 8, task: '数据模型设计' },
       { date: '2023-03-02', user: '王五', hours: 7, task: 'ETL流程开发' },
       { date: '2023-03-03', user: '赵六', hours: 6, task: '可视化组件开发' }
+    ],
+    equipments: [
+      {
+        id: 1,
+        localName: '吹瓶机',
+        englishName: 'Combi-blower',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'SBO22M#220086 COMBI C5 SBMXGM220086',
+        ipAddress: '',
+        plcType: 'B&R',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 2,
+        localName: '灌装机',
+        englishName: 'Combi-filler',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Combi Predis FMa 22/100/30T #1542',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 3,
+        localName: '上盖机',
+        englishName: 'cap feeder',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Aidlin 24-24',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      }
     ]
   },
   {
@@ -95,6 +171,44 @@ export const mockProjects = [
       { date: '2023-05-02', user: '王五', hours: 8, task: 'UI设计评审' },
       { date: '2023-05-03', user: '赵六', hours: 8, task: 'API接口对接' },
       { date: '2023-05-04', user: '张三', hours: 6, task: '前端框架搭建' }
+    ],
+    equipments: [
+      {
+        id: 1,
+        localName: '吹瓶机',
+        englishName: 'Combi-blower',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'SBO22M#220086 COMBI C5 SBMXGM220086',
+        ipAddress: '',
+        plcType: 'B&R',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 2,
+        localName: '灌装机',
+        englishName: 'Combi-filler',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Combi Predis FMa 22/100/30T #1542',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 3,
+        localName: '上盖机',
+        englishName: 'cap feeder',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Aidlin 24-24',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      }
     ]
   },
 
@@ -126,6 +240,44 @@ export const mockProjects = [
     timeRecords: [
       { date: '2023-03-26', user: '赵六', hours: 8, task: '需求分析' },
       { date: '2023-04-01', user: '张三', hours: 7, task: '系统开发' }
+    ],
+    equipments: [
+      {
+        id: 1,
+        localName: '吹瓶机',
+        englishName: 'Combi-blower',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'SBO22M#220086 COMBI C5 SBMXGM220086',
+        ipAddress: '',
+        plcType: 'B&R',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 2,
+        localName: '灌装机',
+        englishName: 'Combi-filler',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Combi Predis FMa 22/100/30T #1542',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 3,
+        localName: '上盖机',
+        englishName: 'cap feeder',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Aidlin 24-24',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      }
     ]
   },
   {
@@ -154,6 +306,44 @@ export const mockProjects = [
     ],
     timeRecords: [
       { date: '2023-05-29', user: '李四', hours: 8, task: '活动策划' }
+    ],
+    equipments: [
+      {
+        id: 1,
+        localName: '吹瓶机',
+        englishName: 'Combi-blower',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'SBO22M#220086 COMBI C5 SBMXGM220086',
+        ipAddress: '',
+        plcType: 'B&R',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 2,
+        localName: '灌装机',
+        englishName: 'Combi-filler',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Combi Predis FMa 22/100/30T #1542',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      },
+      {
+        id: 3,
+        localName: '上盖机',
+        englishName: 'cap feeder',
+        speed: '48000',
+        supplier: 'SIDEL',
+        serialNumber: 'Aidlin 24-24',
+        ipAddress: '',
+        plcType: 'SIEMENS',
+        communicationType: 'Ethernet',
+        tagsReceived: 'Yes'
+      }
     ]
   }
 ];

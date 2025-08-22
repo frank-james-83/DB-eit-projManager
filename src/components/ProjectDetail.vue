@@ -72,6 +72,15 @@
           @remove-hardware-software="removeHardwareSoftware"
           @material-select="handleMaterialSelect" />
       </el-tab-pane>
+      
+      <!-- 设备信息 -->
+      <el-tab-pane label="设备信息" name="equipment">
+        <EquipmentInfo
+          :project="projectEdit"
+          :is-edit-mode="editMode.equipment"
+          @toggle-edit="toggleEdit('equipment')"
+          @cancel-edit="cancelEdit('equipment')" />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -97,6 +106,7 @@ import BasicInfo from './detail/BasicInfo.vue';
 import ProgressTracking from './detail/ProgressTracking.vue';
 import HoursStatistics from './detail/HoursStatistics.vue';
 import EitInfo from './detail/EitInfo.vue';
+import EquipmentInfo from './detail/EquipmentInfo.vue';
 
 use([
   CanvasRenderer,
@@ -113,7 +123,8 @@ export default {
     BasicInfo,
     ProgressTracking,
     HoursStatistics,
-    EitInfo
+    EitInfo,
+    EquipmentInfo
   },
   props: {
     project: {
@@ -134,7 +145,8 @@ export default {
       cost: false,
       materials: false,
       hours: false,
-      eit: false
+      eit: false,
+      equipment: false
     });
 
     // 图表渲染控制
@@ -561,30 +573,32 @@ export default {
       projectEdit.value.milestones.splice(index, 1);
     };
 
-    // 切换编辑/保存
-    function toggleEdit(tab) {
-      if (!editMode[tab]) {
-        // 进入编辑模式，深拷贝当前数据
-        projectEdit.value = JSON.parse(JSON.stringify(props.project));
-        // 确保EIT模块和软硬件数组存在
-        if (!projectEdit.value.eitModules) {
-          projectEdit.value.eitModules = [];
-        }
-        if (!projectEdit.value.hardwareSoftware) {
-          projectEdit.value.hardwareSoftware = [];
-        }
-        editMode[tab] = true;
-      } else {
-        // 保存，发送更新事件
+    const toggleEdit = (tab) => {
+      // 如果是从编辑模式切换到非编辑模式，保存数据
+      if (editMode[tab]) {
+        // 保存数据到服务器或更新本地数据
         emit('update-project', projectEdit.value);
-        editMode[tab] = false;
       }
-    }
-    
-    // 取消编辑
-    function cancelEdit(tab) {
+      
+      // 切换编辑模式
+      editMode[tab] = !editMode[tab];
+      
+      // 特殊处理：如果是工时统计标签且切换到编辑模式，隐藏图表
+      if (tab === 'hours') {
+        showChart.value = !editMode[tab];
+      }
+    };
+
+    const cancelEdit = (tab) => {
       editMode[tab] = false;
+      
+      // 重新加载项目数据，放弃修改
       projectEdit.value = JSON.parse(JSON.stringify(props.project));
+      
+      // 特殊处理：如果是工时统计标签，显示图表
+      if (tab === 'hours') {
+        showChart.value = true;
+      }
     }
 
     return {
