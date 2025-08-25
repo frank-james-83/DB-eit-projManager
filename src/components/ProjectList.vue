@@ -46,7 +46,7 @@
         </el-dropdown>
 
         <!-- 搜索框 -->
-        <el-input placeholder="搜索项目" size="small" :value="searchQuery" class="search-input" @input="handleSearchInput">
+        <el-input placeholder="搜索项目" size="small" :model-value="localSearchQuery" class="search-input" @input="handleSearchInput">
           <el-button slot="append" size="small"><el-icon>
               <Search />
             </el-icon></el-button>
@@ -129,6 +129,14 @@ export default {
     // 本地排序和过滤状态
     const localSortState = ref({ prop: '', order: '' });
     const localFilterState = ref({});
+    
+    // 本地搜索查询引用
+    const localSearchQuery = ref(props.searchQuery);
+
+    // 监听props.searchQuery变化，同步更新本地引用
+    watch(() => props.searchQuery, (newVal) => {
+      localSearchQuery.value = newVal;
+    });
 
     // 计算计划工时（所有periods.hours的总和）
     const calculatePlannedHours = (project) => {
@@ -174,23 +182,17 @@ export default {
       return totalUsedHours;
     };
 
-    // 过滤后的项目列表
+    // 计算属性：过滤后的项目列表
     const filteredProjects = computed(() => {
-      let arr = props.projects.map(project => {
-        return {
-          ...project,
-          plannedHours: calculatePlannedHours(project),
-          usedHours: calculateUsedHours(project)
-        };
-      });
+      let arr = [...props.projects];
       
-      // 搜索框过滤
-      if (props.searchQuery) {
-        const query = props.searchQuery.toLowerCase();
-        arr = arr.filter(project =>
-          project.name.toLowerCase().includes(query) ||
-          project.projectId.toLowerCase().includes(query) ||
-          project.manager.toLowerCase().includes(query)
+      // 搜索过滤
+      if (localSearchQuery.value) {
+        const searchLower = localSearchQuery.value.toLowerCase();
+        arr = arr.filter(project => 
+          project.projectId.toLowerCase().includes(searchLower) ||
+          project.name.toLowerCase().includes(searchLower) ||
+          project.manager.toLowerCase().includes(searchLower)
         );
       }
       
@@ -271,6 +273,9 @@ export default {
     };
 
     const handleSearchInput = (value) => {
+      // 确保接收输入值并更新本地引用
+      localSearchQuery.value = value;
+      // 触发事件通知父组件
       emit('update:searchQuery', value);
     };
 
@@ -303,15 +308,17 @@ export default {
     };
 
     return {
+      localSearchQuery,
       filteredProjects,
+      localSortState,
+      localFilterState,
+      calculateProgressPercentage,
       handleProjectClick,
       handleProjectNameClick,
-      handleColumnChange,
       handleSearchInput,
       canHide,
       getUniqueManagers,
       getProgressColor,
-      calculateProgressPercentage,
       handleSortChange,
       handleFilterChange
     };

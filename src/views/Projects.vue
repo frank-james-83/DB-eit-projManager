@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import ProjectManagement from '../ProjectManagement.vue'
+import ProjectManagement from './ProjectManagement.vue'
 
 export default {
   name: 'Projects',

@@ -123,10 +123,10 @@
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { getProjects as fetchProjects, addProject, updateProject, deleteProject } from './api/project';
-import ProjectList from './components/ProjectList.vue';
-import GanttChart from './components/GanttChart.vue';
-import ProjectDetail from './components/ProjectDetail.vue';
+import { getProjects as fetchProjects, addProject, updateProject, deleteProject } from '../api/project';
+import ProjectList from '../components/ProjectList.vue';
+import GanttChart from '../components/GanttChart.vue';
+import ProjectDetail from '../components/ProjectDetail.vue';
 import { 
   getCookie, 
   setCookie,
@@ -140,7 +140,7 @@ import {
   getGanttChartViewMode,
   saveGanttChartDateRange,
   getGanttChartDateRange
-} from './utils/cookies';
+} from '../utils/cookies';
 
 export default {
   name: 'ProjectManagement',
