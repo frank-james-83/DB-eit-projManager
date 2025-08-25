@@ -2,7 +2,7 @@
  * 认证工具函数
  */
 
-import { refreshToken as refreshApi } from '../api/auth.js'
+import { refreshToken as refreshApi } from '../api/auth.ts'
 
 // 获取访问令牌
 export function getAccessToken() {

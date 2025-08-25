@@ -51,7 +51,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
-import { login } from '../api/auth.js'
+import { login } from '../api/auth.ts'
 
 const router = useRouter()
 const loading = ref(false)

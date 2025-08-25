@@ -3,12 +3,25 @@
 
 // 这里先导出空方法，后续可用axios等库实现
 
-import { mockProjects } from './mockProjects';
+// 项目相关的API接口(模拟)
+import { mockProjects } from '../mock/mockProjects';
 
-export async function fetchProjects() {
-  // TODO: 后台API完成后切换为真实请求
-  // return axios.get('/api/projects')
-  return mockProjects;
+// 获取项目列表
+export async function getProjects() {
+  // 实际项目中应该调用真实的API接口
+  // 示例: GET /api/projects/
+  try {
+    // 模拟API调用
+    const response = await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(mockProjects);
+      }, 500);
+    });
+
+    return response;
+  } catch (error) {
+    throw new Error('获取项目列表失败');
+  }
 }
 
 export async function addProject(project: any) {

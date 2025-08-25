@@ -93,13 +93,13 @@ import { use } from "echarts/core"
 import { CanvasRenderer } from "echarts/renderers"
 import { LineChart } from "echarts/charts"
 import { TooltipComponent, LegendComponent, GridComponent } from "echarts/components"
-import { 
-  projectManagers as pmList, 
-  siteManagers as smList, 
-  eitEngineers as eitList, 
-  materials as matList, 
-  materialCategories as matCatList 
-} from '../api/mockData';
+import {
+  projectManagers,
+  siteManagers,
+  eitEngineers,
+  materialCategories,
+  materials
+} from '../mock/mockData';
 
 // 引入子组件
 import BasicInfo from './detail/BasicInfo.vue';
@@ -222,11 +222,11 @@ export default {
     };
     
     // 下拉选项数据
-    const projectManagersList = pmList;
-    const siteManagersList = smList;
-    const eitEngineersList = eitList;
-    const materialsList = matList;
-    const materialCategoriesList = matCatList;
+    const projectManagersList = projectManagers;
+    const siteManagersList = siteManagers;
+    const eitEngineersList = eitEngineers;
+    const materialsList = materials;
+    const materialCategoriesList = materialCategories;
     
     const projectEdit = ref({});
 
@@ -524,6 +524,9 @@ export default {
 
     // 添加软硬件
     const addHardwareSoftware = () => {
+      if (!projectEdit.value.hardwareSoftware) {
+        projectEdit.value.hardwareSoftware = [];
+      }
       projectEdit.value.hardwareSoftware.push({
         materialId: '', // 新增物料ID字段
         itemNumber: '',

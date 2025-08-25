@@ -3,7 +3,7 @@
  */
 
 // 获取访问令牌
-export async function login(username, password) {
+export async function login(username: string, password: string): Promise<any> {
   // 实际项目中应该调用真实的API接口
   // 示例: POST /api/token/
   try {
@@ -24,7 +24,7 @@ export async function login(username, password) {
 }
 
 // 刷新访问令牌
-export async function refreshToken(refresh) {
+export async function refreshToken(refresh: string): Promise<any> {
   // 实际项目中应该调用真实的API接口
   // 示例: POST /api/token/refresh/
   try {
@@ -44,7 +44,7 @@ export async function refreshToken(refresh) {
 }
 
 // 检查令牌是否有效
-export function isTokenValid(token) {
+export function isTokenValid(token: string | null): boolean {
   if (!token) return false;
   
   try {
