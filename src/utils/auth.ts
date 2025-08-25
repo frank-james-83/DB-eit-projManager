@@ -5,34 +5,34 @@
 import { refreshToken as refreshApi } from '../api/auth.ts'
 
 // 获取访问令牌
-export function getAccessToken() {
+export function getAccessToken(): string | null {
   return localStorage.getItem('access_token')
 }
 
 // 获取刷新令牌
-export function getRefreshToken() {
+export function getRefreshToken(): string | null {
   return localStorage.getItem('refresh_token')
 }
 
 // 设置访问令牌
-export function setAccessToken(token) {
+export function setAccessToken(token: string): void {
   localStorage.setItem('access_token', token)
 }
 
 // 设置刷新令牌
-export function setRefreshToken(token) {
+export function setRefreshToken(token: string): void {
   localStorage.setItem('refresh_token', token)
 }
 
 // 清除所有令牌
-export function clearTokens() {
+export function clearTokens(): void {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   localStorage.removeItem('user')
 }
 
 // 刷新访问令牌
-export async function refreshAccessToken() {
+export async function refreshAccessToken(): Promise<string> {
   try {
     const refreshToken = getRefreshToken()
     if (!refreshToken) {
@@ -49,7 +49,7 @@ export async function refreshAccessToken() {
 }
 
 // 检查访问令牌是否即将过期（提前5分钟刷新）
-export function isTokenExpiringSoon(token) {
+export function isTokenExpiringSoon(token: string | null): boolean {
   if (!token) return true
   
   try {

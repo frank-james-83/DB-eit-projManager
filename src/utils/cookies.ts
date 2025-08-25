@@ -8,7 +8,7 @@
  * @param {string} value - Cookie value
  * @param {number} days - Expiration time in days
  */
-export function setCookie(name, value, days = 30) {
+export function setCookie(name: string, value: string, days: number = 30): void {
   const expires = new Date();
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
   document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
@@ -19,7 +19,7 @@ export function setCookie(name, value, days = 30) {
  * @param {string} name - Cookie name
  * @returns {string|null} Cookie value or null if not found
  */
-export function getCookie(name) {
+export function getCookie(name: string): string | null {
   const nameEQ = `${name}=`;
   const ca = document.cookie.split(';');
   for (let i = 0; i < ca.length; i++) {
@@ -34,7 +34,7 @@ export function getCookie(name) {
  * Delete a cookie by name
  * @param {string} name - Cookie name
  */
-export function deleteCookie(name) {
+export function deleteCookie(name: string): void {
   setCookie(name, '', -1);
 }
 
@@ -42,7 +42,7 @@ export function deleteCookie(name) {
  * Save project list column settings to cookies
  * @param {Object} columnSettings - Column visibility settings
  */
-export function saveProjectListColumnSettings(columnSettings) {
+export function saveProjectListColumnSettings(columnSettings: any): void {
   setCookie('projectListColumnSettings', JSON.stringify(columnSettings));
 }
 
@@ -50,7 +50,7 @@ export function saveProjectListColumnSettings(columnSettings) {
  * Get project list column settings from cookies
  * @returns {Object|null} Column settings or null if not found
  */
-export function getProjectListColumnSettings() {
+export function getProjectListColumnSettings(): any | null {
   const settings = getCookie('projectListColumnSettings');
   return settings ? JSON.parse(settings) : null;
 }
@@ -59,7 +59,7 @@ export function getProjectListColumnSettings() {
  * Save project list filters to cookies
  * @param {Object} filters - Filter settings
  */
-export function saveProjectListFilters(filters) {
+export function saveProjectListFilters(filters: any): void {
   setCookie('projectListFilters', JSON.stringify(filters));
 }
 
@@ -67,7 +67,7 @@ export function saveProjectListFilters(filters) {
  * Get project list filters from cookies
  * @returns {Object|null} Filter settings or null if not found
  */
-export function getProjectListFilters() {
+export function getProjectListFilters(): any | null {
   const filters = getCookie('projectListFilters');
   return filters ? JSON.parse(filters) : null;
 }
@@ -76,7 +76,7 @@ export function getProjectListFilters() {
  * Save project list sorting to cookies
  * @param {Object} sorting - Sorting settings
  */
-export function saveProjectListSorting(sorting) {
+export function saveProjectListSorting(sorting: any): void {
   setCookie('projectListSorting', JSON.stringify(sorting));
 }
 
@@ -84,7 +84,7 @@ export function saveProjectListSorting(sorting) {
  * Get project list sorting from cookies
  * @returns {Object|null} Sorting settings or null if not found
  */
-export function getProjectListSorting() {
+export function getProjectListSorting(): any | null {
   const sorting = getCookie('projectListSorting');
   return sorting ? JSON.parse(sorting) : null;
 }
@@ -93,7 +93,7 @@ export function getProjectListSorting() {
  * Save Gantt chart view mode to cookies
  * @param {string} viewMode - View mode ('month' or 'week')
  */
-export function saveGanttChartViewMode(viewMode) {
+export function saveGanttChartViewMode(viewMode: string): void {
   setCookie('ganttChartViewMode', viewMode);
 }
 
@@ -101,7 +101,7 @@ export function saveGanttChartViewMode(viewMode) {
  * Get Gantt chart view mode from cookies
  * @returns {string|null} View mode or null if not found
  */
-export function getGanttChartViewMode() {
+export function getGanttChartViewMode(): string | null {
   return getCookie('ganttChartViewMode');
 }
 
@@ -109,7 +109,7 @@ export function getGanttChartViewMode() {
  * Save Gantt chart date range to cookies
  * @param {Array} dateRange - Date range [startDate, endDate]
  */
-export function saveGanttChartDateRange(dateRange) {
+export function saveGanttChartDateRange(dateRange: [Date, Date]): void {
   setCookie('ganttChartDateRange', JSON.stringify(dateRange));
 }
 
@@ -117,7 +117,7 @@ export function saveGanttChartDateRange(dateRange) {
  * Get Gantt chart date range from cookies
  * @returns {Array|null} Date range or null if not found
  */
-export function getGanttChartDateRange() {
+export function getGanttChartDateRange(): [Date, Date] | null {
   const dateRange = getCookie('ganttChartDateRange');
   return dateRange ? JSON.parse(dateRange) : null;
 }

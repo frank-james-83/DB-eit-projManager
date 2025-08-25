@@ -106,7 +106,7 @@ import {
   getProjectListFilters,
   saveProjectListSorting,
   saveProjectListFilters
-} from '../utils/cookies'
+} from '../utils/cookies.ts'
 
 export default {
   name: 'ProjectList',

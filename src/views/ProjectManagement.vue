@@ -140,7 +140,7 @@ import {
   getGanttChartViewMode,
   saveGanttChartDateRange,
   getGanttChartDateRange
-} from '../utils/cookies';
+} from '../utils/cookies.ts';
 
 export default {
   name: 'ProjectManagement',
