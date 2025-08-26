@@ -72,34 +72,39 @@
       />
 
       <!-- period 编辑弹窗 -->
-      <el-dialog v-model="periodEditDialog.visible" title="编辑项目区间" width="600px" @close="closePeriodEditDialog">
+      <el-dialog v-model="periodEditDialog.visible" title="编辑项目区间" width="800px" @close="closePeriodEditDialog">
         <el-table :data="periodEditDialog.periods" border size="small">
-          <el-table-column prop="start" label="开始时间">
+          <el-table-column label="时间范围" width="300">
             <template #default="scope">
-              <el-date-picker v-model="scope.row.start" type="date" size="small" />
+              <el-date-picker 
+                v-model="scope.row.dateRange" 
+                type="daterange" 
+                range-separator="至" 
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                size="small"
+                unlink-panels
+                :picker-options="pickerOptions"
+                style="width: 100%;">
+              </el-date-picker>
             </template>
           </el-table-column>
-          <el-table-column prop="end" label="结束时间">
-            <template #default="scope">
-              <el-date-picker v-model="scope.row.end" type="date" size="small" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="hours" label="工时">
+          <el-table-column prop="hours" label="工时" width="80">
             <template #default="scope">
               <el-input v-model.number="scope.row.hours" size="small" />
             </template>
           </el-table-column>
-          <el-table-column prop="user" label="人员">
+          <el-table-column prop="user" label="人员" width="120">
             <template #default="scope">
               <el-input v-model="scope.row.user" size="small" />
             </template>
           </el-table-column>
           <el-table-column prop="comment" label="备注">
             <template #default="scope">
-              <el-input v-model="scope.row.comment" size="small" />
+              <el-input v-model="scope.row.comment" size="small" maxlength="15" show-word-limit />
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="60">
+          <el-table-column label="操作" width="80">
             <template #default="scope">
               <el-button type="danger" size="small" icon="el-icon-delete" @click="removePeriod(scope.$index)"
                 circle></el-button>
@@ -327,10 +332,89 @@ export default {
     // period编辑弹窗及相关方法
     const periodEditDialog = ref({ visible: false, projectId: null, periods: [] });
     
+    // 日期选择器选项
+    const pickerOptions = {
+      shortcuts: [{
+        text: '最近一周',
+        onClick(picker) {
+          const end = new Date();
+          const start = new Date();
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+          picker.$emit('pick', [start, end]);
+        }
+      }, {
+        text: '最近一个月',
+        onClick(picker) {
+          const end = new Date();
+          const start = new Date();
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+          picker.$emit('pick', [start, end]);
+        }
+      }, {
+        text: '最近三个月',
+        onClick(picker) {
+          const end = new Date();
+          const start = new Date();
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+          picker.$emit('pick', [start, end]);
+        }
+      }]
+    };
+    
     function openPeriodEditDialog(project) {
       periodEditDialog.value.visible = true;
       periodEditDialog.value.projectId = project.id;
-      periodEditDialog.value.periods = JSON.parse(JSON.stringify(project.periods || []));
+      
+      // 处理现有 periods 数据，将其转换为日期范围格式
+      const processedPeriods = (project.periods || []).map((period) => {
+        // 直接创建新的对象，包含 dateRange 属性
+        const newPeriod = { ...period };
+        
+        // 清空 dateRange（确保是干净的数组）
+        newPeriod.dateRange = [];
+        
+        // 处理开始和结束日期
+        if (period.start && period.end) {
+          let startDate, endDate;
+          
+          // 处理开始日期
+          if (period.start instanceof Date) {
+            startDate = new Date(period.start);
+          } else {
+            // 特别处理字符串格式
+            if (typeof period.start === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(period.start)) {
+              const [year, month, day] = period.start.split('-').map(Number);
+              startDate = new Date(year, month - 1, day);
+            } else {
+              startDate = new Date(period.start);
+            }
+          }
+          
+          // 处理结束日期
+          if (period.end instanceof Date) {
+            endDate = new Date(period.end);
+          } else {
+            // 特别处理字符串格式
+            if (typeof period.end === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(period.end)) {
+              const [year, month, day] = period.end.split('-').map(Number);
+              endDate = new Date(year, month - 1, day);
+            } else {
+              endDate = new Date(period.end);
+            }
+          }
+          
+          // 检查日期是否有效
+          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+            // 确保开始日期不晚于结束日期
+            if (startDate <= endDate) {
+              newPeriod.dateRange = [startDate, endDate];
+            }
+          }
+        }
+        
+        return newPeriod;
+      });
+      periodEditDialog.value.periods = processedPeriods;
     }
     
     function closePeriodEditDialog() {
@@ -338,7 +422,14 @@ export default {
     }
     
     function addPeriod() {
-      periodEditDialog.value.periods.push({ start: '', end: '', hours: 0, user: '', comment: '' });
+      periodEditDialog.value.periods.push({ 
+        dateRange: [], 
+        start: null, 
+        end: null, 
+        hours: 0, 
+        user: '', 
+        comment: '' 
+      });
     }
     
     function removePeriod(idx) {
@@ -349,7 +440,34 @@ export default {
       const pid = periodEditDialog.value.projectId;
       const idx = projects.value.findIndex(p => p.id === pid);
       if (idx !== -1) {
-        projects.value[idx].periods = JSON.parse(JSON.stringify(periodEditDialog.value.periods));
+        // 处理日期范围数据，将其转换为开始和结束日期
+        const processedPeriods = periodEditDialog.value.periods.map(period => {
+          // 如果有日期范围数据，则使用它来设置 start 和 end
+          if (period.dateRange && period.dateRange.length === 2) {
+            const startDate = period.dateRange[0];
+            const endDate = period.dateRange[1];
+            
+            // 确保转换为 YYYY-MM-DD 格式的字符串
+            const formatDateString = (date) => {
+              if (date instanceof Date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+              }
+              return date;
+            };
+            
+            return {
+              ...period,
+              start: formatDateString(startDate),
+              end: formatDateString(endDate)
+            };
+          }
+          // 否则保留原有的 start 和 end
+          return period;
+        });
+        projects.value[idx].periods = processedPeriods;
       }
       periodEditDialog.value.visible = false;
     }
@@ -524,6 +642,7 @@ export default {
       filterState,
       periodEditDialog,
       computedSortBy,
+      pickerOptions,
       handleProjectClick,
       handleProjectNameClick,
       closeDetailPanel,
