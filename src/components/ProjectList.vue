@@ -46,7 +46,12 @@
         </el-dropdown>
 
         <!-- 搜索框 -->
-        <el-input placeholder="搜索项目" size="small" :value="searchQuery" class="search-input" @input="handleSearchInput">
+        <el-input 
+          placeholder="搜索项目" 
+          size="small" 
+          v-model="localSearchQuery" 
+          class="search-input" 
+          @input="handleSearchInput">
           <el-button slot="append" size="small"><el-icon>
               <Search />
             </el-icon></el-button>
@@ -82,7 +87,7 @@
       <el-table-column v-if="columns.usedHours.visible" prop="usedHours" column-key="usedHours" label="已用工时"
         sortable></el-table-column>
 
-      <el-table-column v-if="columns.progress.visible" column-key="progress" label="进度" sortable>
+      <el-table-column v-if="columns.progress.visible" prop="progress" column-key="progress" label="进度" sortable>
         <template #default="scope">
           <div class="progress-cell">
             <el-progress 
@@ -121,11 +126,20 @@ export default {
     },
     searchQuery: {
       type: String,
-      required: true
+      required: false,
+      default: ''
     }
   },
   emits: ['update:searchQuery', 'project-click', 'project-name-click', 'column-change', 'sort-change', 'filter-change'],
   setup(props, { emit }) {
+    // 本地搜索查询状态
+    const localSearchQuery = ref(props.searchQuery || '');
+    
+    // 监听 props.searchQuery 的变化并同步到本地状态
+    watch(() => props.searchQuery, (newVal) => {
+      localSearchQuery.value = newVal || '';
+    });
+
     // 本地排序和过滤状态
     const localSortState = ref({ prop: '', order: '' });
     const localFilterState = ref({});
@@ -177,16 +191,23 @@ export default {
     // 过滤后的项目列表
     const filteredProjects = computed(() => {
       let arr = props.projects.map(project => {
+        // 计算计划工时和已用工时
+        const plannedHours = calculatePlannedHours(project);
+        const usedHours = calculateUsedHours(project);
+        // 计算进度百分比
+        const progress = calculateProgressPercentage(usedHours, plannedHours);
+        
         return {
           ...project,
-          plannedHours: calculatePlannedHours(project),
-          usedHours: calculateUsedHours(project)
+          plannedHours,
+          usedHours,
+          progress
         };
       });
       
       // 搜索框过滤
-      if (props.searchQuery) {
-        const query = props.searchQuery.toLowerCase();
+      if (localSearchQuery.value) {
+        const query = localSearchQuery.value.toLowerCase();
         arr = arr.filter(project =>
           project.name.toLowerCase().includes(query) ||
           project.projectId.toLowerCase().includes(query) ||
@@ -270,10 +291,6 @@ export default {
       emit('column-change', column);
     };
 
-    const handleSearchInput = (value) => {
-      emit('update:searchQuery', value);
-    };
-
     const canHide = (column) => {
       // 确保至少保留一列可见
       const visibleCount = Object.values(props.columns).filter(col => col.visible).length;
@@ -293,8 +310,15 @@ export default {
     };
 
     const handleSortChange = ({ prop, order }) => {
-      localSortState.value = { prop, order };
-      emit('sort-change', { prop, order });
+      // 确保prop存在且order是ascending或descending
+      if (prop && (order === 'ascending' || order === 'descending')) {
+        localSortState.value = { prop, order };
+        emit('sort-change', { prop, order });
+      } else {
+        // 如果没有排序信息，清空排序状态
+        localSortState.value = { prop: '', order: '' };
+        emit('sort-change', { prop: '', order: '' });
+      }
     };
     
     const handleFilterChange = (filters) => {
@@ -302,7 +326,12 @@ export default {
       emit('filter-change', filters);
     };
 
+    const handleSearchInput = (value) => {
+      emit('update:searchQuery', value);
+    };
+
     return {
+      localSearchQuery,
       filteredProjects,
       handleProjectClick,
       handleProjectNameClick,

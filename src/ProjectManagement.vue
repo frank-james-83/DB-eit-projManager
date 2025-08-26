@@ -54,6 +54,7 @@
         :time-range="timeRange"
         :date-range="dateRange"
         :active-project-id="activeProjectId"
+        :sort-by="computedSortBy"
         @update:timeRange="timeRange = $event"
         @update:dateRange="handleDateRangeChange"
         @prev-time-range="prevTimeRange"
@@ -260,6 +261,14 @@ export default {
 
     // 排序和过滤状态
     const sortState = ref({ prop: '', order: '' });
+    
+    // 计算属性用于传递给甘特图的排序信息
+    const computedSortBy = computed(() => {
+      return {
+        field: sortState.value.prop,
+        order: sortState.value.order === 'ascending' ? 1 : sortState.value.order === 'descending' ? -1 : 0
+      };
+    });
     const filterState = ref({});
 
     // 监听设置变化并保存到cookie
@@ -514,6 +523,7 @@ export default {
       sortState,
       filterState,
       periodEditDialog,
+      computedSortBy,
       handleProjectClick,
       handleProjectNameClick,
       closeDetailPanel,

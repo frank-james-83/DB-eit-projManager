@@ -40,7 +40,7 @@
         </div>
       </div>
       <!-- 甘特图项目行 -->
-      <div v-for="project in projects" :key="project.id" class="gantt-row"
+      <div v-for="project in sortedProjects" :key="project.id" class="gantt-row"
         :class="{ 'gantt-row-active': activeProjectId === project.id }">
         <!-- period 条形图 -->
         <template v-if="project.periods && project.periods.length">
@@ -99,6 +99,10 @@ export default {
     activeProjectId: {
       type: [String, Number],
       default: null
+    },
+    sortBy: {
+      type: Object,
+      default: () => ({ field: '', order: 0 })
     }
   },
   emits: ['update:timeRange', 'update:dateRange', 'prev-time-range', 'next-time-range', 'time-range-change', 'period-edit'],
@@ -154,6 +158,120 @@ export default {
         return weeks;
       }
       return [];
+    });
+
+    // 根据排序属性对项目进行排序
+    const sortedProjects = computed(() => {
+      if (!props.sortBy || !props.sortBy.field || props.sortBy.order === 0) {
+        return props.projects;
+      }
+
+      const field = props.sortBy.field;
+      const order = props.sortBy.order;
+      
+      // 计算计划工时（所有periods.hours的总和）
+      const calculatePlannedHours = (project) => {
+        if (!project.periods || !Array.isArray(project.periods)) {
+          return 0;
+        }
+        return project.periods.reduce((total, period) => total + (period.hours || 0), 0);
+      };
+
+      // 计算已用工时（根据ProjectDetail.vue中的实际工时计算逻辑）
+      const calculateUsedHours = (project) => {
+        if (!project.periods || !Array.isArray(project.periods)) {
+          return 0;
+        }
+        
+        const now = new Date();
+        let totalUsedHours = 0;
+        
+        project.periods.forEach(period => {
+          const periodEnd = new Date(period.end);
+          
+          // 如果结束日期在当前日期之前，则全部为实际工时
+          if (periodEnd < now) {
+            totalUsedHours += period.hours || 0;
+            return;
+          }
+          
+          // 如果结束日期在当前日期之后，则按比例计算
+          const periodStart = new Date(period.start);
+          const totalTime = periodEnd.getTime() - periodStart.getTime();
+          
+          // 如果任务还没开始，实际工时为0
+          if (periodStart > now) {
+            return;
+          }
+          
+          // 计算到当前时间已完成的部分
+          const elapsed = now.getTime() - periodStart.getTime();
+          const ratio = Math.min(1, Math.max(0, elapsed / totalTime));
+          totalUsedHours += Math.round((period.hours || 0) * ratio);
+        });
+        
+        return totalUsedHours;
+      };
+
+      // 计算进度百分比
+      const calculateProgressPercentage = (usedHours, plannedHours) => {
+        if (!plannedHours || plannedHours === 0) return 0;
+        const percentage = Math.round((usedHours / plannedHours) * 100);
+        return Math.min(100, Math.max(0, percentage));
+      };
+      
+      return [...props.projects].sort((a, b) => {
+        let aVal, bVal;
+        
+        // 根据字段名称获取正确的值
+        switch (field) {
+          case 'plannedHours':
+            aVal = calculatePlannedHours(a);
+            bVal = calculatePlannedHours(b);
+            break;
+          case 'usedHours':
+            aVal = calculateUsedHours(a);
+            bVal = calculateUsedHours(b);
+            break;
+          case 'progress':
+            const aPlanned = calculatePlannedHours(a);
+            const aUsed = calculateUsedHours(a);
+            const bPlanned = calculatePlannedHours(b);
+            const bUsed = calculateUsedHours(b);
+            aVal = calculateProgressPercentage(aUsed, aPlanned);
+            bVal = calculateProgressPercentage(bUsed, bPlanned);
+            break;
+          default:
+            aVal = a[field];
+            bVal = b[field];
+        }
+        
+        // 处理比较逻辑
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          const result = aVal.localeCompare(bVal);
+          return order === 1 ? result : -result;
+        } else if (typeof aVal === 'number' && typeof bVal === 'number') {
+          // 对数字进行排序
+          if (aVal < bVal) {
+            return order === 1 ? -1 : 1;
+          }
+          if (aVal > bVal) {
+            return order === 1 ? 1 : -1;
+          }
+          return 0;
+        } else {
+          // 处理不同类型的情况（例如数字与字符串比较）
+          // 将非数字值排在最后
+          if (typeof aVal === 'number' && typeof bVal !== 'number') {
+            return order === 1 ? -1 : 1;
+          }
+          if (typeof aVal !== 'number' && typeof bVal === 'number') {
+            return order === 1 ? 1 : -1;
+          }
+          // 如果都不是数字且都不是字符串，则保持原顺序
+          return 0;
+        }
+      });
     });
 
     // 多段periods渲染支持
@@ -295,7 +413,8 @@ export default {
       nextTimeRange,
       handleTimeRangeChange,
       handleDateRangeChange,
-      openPeriodEditDialog
+      openPeriodEditDialog,
+      sortedProjects
     };
   }
 };
