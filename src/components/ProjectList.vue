@@ -357,6 +357,7 @@ export default {
   overflow-x: auto;
   overflow-y: auto;
   min-width: 0;
+  background-color: #fff;
 }
 
 .list-controls {
