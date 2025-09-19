@@ -64,30 +64,33 @@
       @row-click="handleProjectClick" @sort-change="handleSortChange" @filter-change="handleFilterChange"
       class="project-table">
       <el-table-column v-if="columns.projectId.visible" prop="projectId" column-key="projectId" label="项目编号"
-        sortable :filters="[{ text: 'EIT-2023', value: 'EIT-2023' }, { text: 'EIT-2024', value: 'EIT-2024' }]"
-        :filter-method="(value, row) => row.projectId.includes(value)"></el-table-column>
+        sortable :filters="getUniqueProjectIds().map(id => ({ text: id, value: id }))" filter-placement="bottom-end"
+        :filter-method="(value, row) => row.projectId === value" width="100"></el-table-column>
 
       <el-table-column v-if="columns.name.visible" prop="name" column-key="name" label="项目名称" sortable
-        :filter-method="(value, row) => row.name.includes(value)">
+        :filters="getUniqueNames().map(name => ({ text: name, value: name }))" filter-placement="bottom-end"
+        :filter-method="(value, row) => row.name === value" width="100">
         <template #default="scope">
-          <span class="project-name" @click.stop="handleProjectNameClick(scope.row)">{{ scope.row.name }}</span>
+          <el-tooltip :content="scope.row.name" placement="top">
+            <span class="project-name" @click.stop="handleProjectNameClick(scope.row)">{{ scope.row.name }}</span>
+          </el-tooltip>
         </template>
       </el-table-column>
 
       <el-table-column v-if="columns.manager.visible" prop="manager" column-key="manager" label="项目经理" sortable
-        :filters="getUniqueManagers().map(m => ({ text: m, value: m }))"
-        :filter-method="(value, row) => row.manager === value"></el-table-column>
+        :filters="getUniqueManagers().map(m => ({ text: m, value: m }))" filter-placement="bottom-end"
+        :filter-method="(value, row) => row.manager === value" width="100"></el-table-column>
 
       <el-table-column v-if="columns.budgetHours.visible" prop="budgetHours" column-key="budgetHours"
-        label="预算工时" sortable></el-table-column>
+        label="预算工时" sortable width="80"></el-table-column>
 
       <el-table-column v-if="columns.plannedHours.visible" prop="plannedHours" column-key="plannedHours"
-        label="计划工时" sortable></el-table-column>
+        label="计划工时" sortable width="80"></el-table-column>
 
       <el-table-column v-if="columns.usedHours.visible" prop="usedHours" column-key="usedHours" label="已用工时"
-        sortable></el-table-column>
+        sortable width="80"></el-table-column>
 
-      <el-table-column v-if="columns.progress.visible" prop="progress" column-key="progress" label="进度" sortable>
+      <el-table-column v-if="columns.progress.visible" prop="progress" column-key="progress" label="进度" sortable width="80">
         <template #default="scope">
           <div class="progress-cell">
             <el-progress 
@@ -297,10 +300,25 @@ export default {
       return visibleCount > 1 || !props.columns[column].visible;
     };
 
+    // 获取唯一的项目经理列表
     const getUniqueManagers = () => {
       const managers = new Set();
       props.projects.forEach(project => managers.add(project.manager));
       return Array.from(managers);
+    };
+
+    // 获取唯一的项目编号列表
+    const getUniqueProjectIds = () => {
+      const projectIds = new Set();
+      props.projects.forEach(project => projectIds.add(project.projectId));
+      return Array.from(projectIds);
+    };
+
+    // 获取唯一的项目名称列表
+    const getUniqueNames = () => {
+      const names = new Set();
+      props.projects.forEach(project => names.add(project.name));
+      return Array.from(names);
     };
 
     const getProgressColor = (progress) => {
@@ -339,6 +357,8 @@ export default {
       handleSearchInput,
       canHide,
       getUniqueManagers,
+      getUniqueProjectIds,
+      getUniqueNames,
       getProgressColor,
       calculateProgressPercentage,
       handleSortChange,
@@ -350,7 +370,7 @@ export default {
 
 <style scoped>
 .project-list-container {
-  width: 500px;
+  width: 100%;
   border-right: 1px solid #eaecef;
   display: flex;
   flex-direction: column;
@@ -358,6 +378,7 @@ export default {
   overflow-y: auto;
   min-width: 0;
   background-color: #fff;
+  height: 100%;
 }
 
 .list-controls {
@@ -366,6 +387,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 64px; /* 与甘特图控制区域高度保持一致 */
+  box-sizing: border-box;
 }
 
 .controls-right {
@@ -406,5 +429,23 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* 加强制单行显示，确保内容不换行 */
+.project-table :deep(.cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 禁用表头自动换行并调整高度以匹配甘特图 */
+.project-table :deep(.el-table__header-wrapper) {
+  white-space: nowrap;
+}
+
+.project-table :deep(.el-table__header) {
+  height: 70px; /* 时间轴(40px) + 统计行(30px) */
 }
 </style>

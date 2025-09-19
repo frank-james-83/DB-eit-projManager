@@ -34,34 +34,41 @@
       </div>
     </header>
 
-    <div class="main-content">
+    <div class="main-content" ref="mainContentRef">
       <!-- 左侧项目列表 -->
-      <ProjectList 
-        :projects="projects"
-        :columns="columns"
-        :search-query="searchQuery"
-        @update:searchQuery="searchQuery = $event"
-        @project-click="handleProjectClick"
-        @project-name-click="handleProjectNameClick"
-        @column-change="handleColumnChange"
-        @sort-change="handleSortChange"
-        @filter-change="handleFilterChange"
-      />
+      <div class="panel-wrapper" :style="{ width: leftPanelWidth + 'px' }">
+        <ProjectList 
+          :projects="projects"
+          :columns="columns"
+          :search-query="searchQuery"
+          @update:searchQuery="searchQuery = $event"
+          @project-click="handleProjectClick"
+          @project-name-click="handleProjectNameClick"
+          @column-change="handleColumnChange"
+          @sort-change="handleSortChange"
+          @filter-change="handleFilterChange"
+        />
+      </div>
+
+      <!-- 可拖拽调整大小的分隔条 -->
+      <div class="resizer" @mousedown="initDrag"></div>
 
       <!-- 中间甘特图区域 -->
-      <GanttChart
-        :projects="filteredProjects"
-        :time-range="timeRange"
-        :date-range="dateRange"
-        :active-project-id="activeProjectId"
-        :sort-by="computedSortBy"
-        @update:timeRange="timeRange = $event"
-        @update:dateRange="handleDateRangeChange"
-        @prev-time-range="prevTimeRange"
-        @next-time-range="nextTimeRange"
-        @time-range-change="handleTimeRangeChange"
-        @period-edit="openPeriodEditDialog"
-      />
+      <div class="panel-wrapper flex-panel">
+        <GanttChart
+          :projects="filteredProjects"
+          :time-range="timeRange"
+          :date-range="dateRange"
+          :active-project-id="activeProjectId"
+          :sort-by="computedSortBy"
+          @update:timeRange="timeRange = $event"
+          @update:dateRange="handleDateRangeChange"
+          @prev-time-range="prevTimeRange"
+          @next-time-range="nextTimeRange"
+          @time-range-change="handleTimeRangeChange"
+          @period-edit="openPeriodEditDialog"
+        />
+      </div>
 
       <!-- 右侧项目详情面板 -->
       <ProjectDetail
@@ -628,6 +635,43 @@ export default {
       setCookie('projectListSearchQuery', searchQuery.value);
     };
 
+    // 左侧面板宽度相关状态
+    const leftPanelWidth = ref(500); // 默认宽度500px
+    const mainContentRef = ref(null);
+    const isDragging = ref(false);
+
+    // 拖拽相关方法
+    const initDrag = (e) => {
+      isDragging.value = true;
+      document.addEventListener('mousemove', handleDrag);
+      document.addEventListener('mouseup', stopDrag);
+      e.preventDefault();
+    };
+
+    const handleDrag = (e) => {
+      if (!isDragging.value) return;
+      
+      const mainContentRect = mainContentRef.value.getBoundingClientRect();
+      const newWidth = e.clientX - mainContentRect.left;
+      
+      // 限制最小和最大宽度
+      if (newWidth >= 300 && newWidth <= 800) {
+        leftPanelWidth.value = newWidth;
+      }
+    };
+
+    const stopDrag = () => {
+      isDragging.value = false;
+      document.removeEventListener('mousemove', handleDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    };
+
+    // 组件销毁时清理事件监听器
+    onUnmounted(() => {
+      document.removeEventListener('mousemove', handleDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    });
+
     return {
       searchQuery,
       timeRange,
@@ -662,7 +706,15 @@ export default {
       // 用户信息相关
       username,
       currentTime,
-      handleLogout
+      handleLogout,
+      // 左侧面板宽度相关
+      leftPanelWidth,
+      mainContentRef,
+      isDragging,
+      // 拖拽相关方法
+      initDrag,
+      handleDrag,
+      stopDrag
     };
   }
 };
@@ -691,7 +743,7 @@ export default {
 .logo {
   display: flex;
   align-items: center;
-  font-size: 18px;
+  font-size: 30px;
   font-weight: bold;
 }
 
@@ -725,12 +777,50 @@ export default {
 
 .main-content {
   display: flex;
-  flex: 1 1 0%;
+  flex: 1;
   min-width: 0;
   width: 100%;
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
+}
+
+/* 面板包装器 */
+.panel-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-panel {
+  flex: 1;
+}
+
+/* 可拖拽调整大小的分隔条 */
+.resizer {
+  width: 5px;
+  background-color: #eaecef;
+  cursor: col-resize;
+  position: relative;
+  transition: background-color 0.3s;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.resizer:hover {
+  background-color: #1e88e5;
+}
+
+.resizer::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 30px;
+  background-color: #909399;
 }
 
 .panel-mask {

@@ -39,6 +39,13 @@
           <div v-if="item.label2" style="font-size:12px;color:#888;">{{ item.label2 }}</div>
         </div>
       </div>
+      <!-- 工时统计信息（仅在周视图下显示） -->
+      <div v-if="timeRange === 'week' && weeklyHours.length > 0" class="gantt-hours-statistics">
+        <div v-for="(item, index) in weeklyHours" :key="index" class="hours-item"
+          :style="getTimelineItemStyle(timelineHeaders[index])">
+          <div class="hours-text">{{ item }}h</div>
+        </div>
+      </div>
       <!-- 甘特图项目行 -->
       <div v-for="project in sortedProjects" :key="project.id" class="gantt-row"
         :class="{ 'gantt-row-active': activeProjectId === project.id }">
@@ -138,26 +145,106 @@ export default {
         // 使 cur 指向本周一
         cur.setDate(cur.getDate() - ((cur.getDay() + 6) % 7));
         const weeks = [];
-        let weekIdx = 1;
+        
+        // 计算真实周数
         while (cur <= end) {
           const weekStart = new Date(cur);
           const weekEnd = new Date(cur);
           weekEnd.setDate(weekEnd.getDate() + 6);
 
+          // 获取该周的真实周数
+          const weekNumber = getWeekNumber(weekStart);
+          const year = weekStart.getFullYear();
+          
           const m1 = (weekStart.getMonth() + 1).toString().padStart(2, '0');
           const d1 = weekStart.getDate().toString().padStart(2, '0');
           weeks.push({
-            label1: `W${weekIdx}`,
+            label1: `W${weekNumber}`,
             label2: `${m1}/${d1}`,
             start: weekStart,
             end: weekEnd
           });
           cur.setDate(cur.getDate() + 7);
-          weekIdx++;
         }
         return weeks;
       }
       return [];
+    });
+
+    // 获取指定日期所在年的周数（ISO周数）
+    function getWeekNumber(date) {
+      const target = new Date(date.valueOf());
+      const dayNr = (date.getDay() + 6) % 7;
+      target.setDate(target.getDate() - dayNr + 3);
+      const firstThursday = target.valueOf();
+      target.setMonth(0, 1);
+      if (target.getDay() !== 4) {
+        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+      }
+      const weekNumber = 1 + Math.ceil((firstThursday - target) / 604800000);
+      return weekNumber;
+    }
+
+    // 计算每周工时统计
+    const weeklyHours = computed(() => {
+      // 仅在周视图下计算
+      if (props.timeRange !== 'week') {
+        return [];
+      }
+      
+      // 获取时间轴上的周信息
+      const weeks = timelineHeaders.value;
+      if (!weeks || weeks.length === 0) {
+        return [];
+      }
+      
+      // 初始化每周工时为0
+      const hours = new Array(weeks.length).fill(0);
+      
+      // 遍历所有项目
+      props.projects.forEach(project => {
+        if (!project.periods || !Array.isArray(project.periods)) {
+          return;
+        }
+        
+        // 遍历项目的所有时间段
+        project.periods.forEach(period => {
+          if (!period.hours || !period.start || !period.end) {
+            return;
+          }
+          
+          const periodStart = new Date(period.start);
+          const periodEnd = new Date(period.end);
+          const periodHours = period.hours;
+          
+          // 遍历每一周，计算该周期内的工时
+          weeks.forEach((week, weekIndex) => {
+            const weekStart = new Date(week.start);
+            const weekEnd = new Date(week.end);
+            
+            // 计算重叠时间段
+            const overlapStart = new Date(Math.max(periodStart, weekStart));
+            const overlapEnd = new Date(Math.min(periodEnd, weekEnd));
+            
+            // 如果有重叠
+            if (overlapStart <= overlapEnd) {
+              // 计算重叠天数
+              const overlapDays = Math.ceil((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24)) + 1;
+              
+              // 计算周期总天数
+              const periodDays = Math.ceil((periodEnd - periodStart) / (1000 * 60 * 60 * 24)) + 1;
+              
+              // 按比例分配工时，只保留整数部分
+              if (periodDays > 0) {
+                const allocatedHours = (overlapDays / periodDays) * periodHours;
+                hours[weekIndex] += Math.round(allocatedHours);
+              }
+            }
+          });
+        });
+      });
+      
+      return hours;
     });
 
     // 根据排序属性对项目进行排序
@@ -279,6 +366,7 @@ export default {
       const viewStart = new Date(props.dateRange[0]);
       const viewEnd = new Date(props.dateRange[1]);
       const total = viewEnd.getTime() - viewStart.getTime();
+      const now = new Date(); // 当前日期
 
       const pStart = new Date(period.start);
       const pEnd = new Date(period.end);
@@ -297,10 +385,23 @@ export default {
       const left = ((barStart - viewStart.getTime()) / total) * 100;
       const width = Math.max(0.5, ((barEnd - barStart) / total) * 100); // 最小宽度0.5%
 
+      // 根据时间段设置不同的颜色
+      let backgroundColor;
+      if (pEnd < now) {
+        // 已完成的任务 - 使用绿色系
+        backgroundColor = '#4CAF50'; // 绿色
+      } else if (pStart > now) {
+        // 未来的任务 - 使用蓝色系
+        backgroundColor = '#2196F3'; // 蓝色
+      } else {
+        // 正在进行的任务 - 使用橙色系
+        backgroundColor = '#FF9800'; // 橙色
+      }
+
       return {
         left: left + '%',
         width: width + '%',
-        backgroundColor: project.color
+        backgroundColor: backgroundColor
       };
     }
 
@@ -403,6 +504,7 @@ export default {
 
     return {
       timelineHeaders,
+      weeklyHours,
       getGanttBarStyleByPeriod,
       getMilestoneStyle,
       getTimelineItemStyle,
@@ -439,6 +541,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 64px; /* 与项目列表控制区域高度保持一致 */
+  box-sizing: border-box;
 }
 
 .gantt-actions {
@@ -454,7 +558,7 @@ export default {
   flex: 1 1 0%;
   overflow-x: auto;
   overflow-y: visible;
-  padding: 20px 20px 20px 0;
+  padding: 0 20px 20px 0; /* 移除顶部padding，使内容与项目列表对齐 */
   position: relative;
   width: 100%;
   min-width: 0;
@@ -462,11 +566,32 @@ export default {
 }
 
 .gantt-timeline {
-  position: relative;
+  display: flex;
   height: 40px;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #eaecef;
-  padding-bottom: 5px;
+  border-bottom: 1px solid #e4e7ed;
+  background-color: #f5f7fa;
+  flex-shrink: 0; /* 防止在空间不足时压缩 */
+}
+
+.gantt-hours-statistics {
+  display: flex;
+  height: 30px;
+  background-color: #fafafa;
+  flex-shrink: 0; /* 防止在空间不足时压缩 */
+}
+
+.hours-item {
+  position: relative;
+  text-align: center;
+  border-right: 1px solid #c0c4cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hours-text {
+  font-size: 12px;
+  color: #606266;
 }
 
 .timeline-month {
@@ -475,36 +600,43 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   font-weight: bold;
   color: #666;
-  border-right: 1px solid #eaecef;
+  border-right: 1px solid #c0c4cc;
 }
 
 .gantt-row {
   height: 40px;
-  margin-bottom: 10px;
-  background-color: white;
-  border-radius: 4px;
+  margin-bottom: 0;
+  background-color: #ffffff00;
+  border: 1px solid #eeeeee;
+  border-radius: 0;
   position: relative;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
   padding-left: 10px;
   display: flex;
   align-items: center;
   overflow: visible;
+  flex-shrink: 0;
+  margin-top: -1px;
+}
+
+.gantt-row:first-child {
+  margin-top: 0;
 }
 
 .gantt-row-active {
-  border: 1px solid #1e88e5;
+  border: 1px solid #1e88e500;
 }
 
 .gantt-task-bar {
   height: 20px;
   border-radius: 4px;
   position: absolute;
-  top: 16px;
-  bottom: 8px;
+  top: 10px;
+  bottom: 10px;
   display: flex;
   align-items: center;
   padding: 0 10px;
